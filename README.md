@@ -50,7 +50,7 @@ And example of using it is here: https://github.com/codewitch-honey-crisis/core2
 
 Note that sending multiple different types of expressions requires the ability to do method overloading in your wrappers, so `<%= ... %>` can only handle a single type of data, otherwise it's C++ only.
 
-You'll probably need some sort of method to send a chunked stream over a socket.
+You'll probably need some sort of method to send chunked data over a socket.
 Here's an example for the ESP-IDF. You'll use this with the expr method to convert expressions in `<%=` `%>` to strings and send them over the wire.
 
 ```cpp
