@@ -49,3 +49,22 @@ You then write the simple wrapper functions from above to send data out on a soc
 And example of using it is here: https://github.com/codewitch-honey-crisis/core2_alarm/blob/main/src-esp-idf/control-esp-idf.cpp
 
 Note that sending multiple different types of expressions requires the ability to do method overloading in your wrappers, so `<%= ... %>` can only handle a single type of data, otherwise it's C++ only.
+
+You'll probably need some sort of method to send a chunked stream over a socket.
+Here's an example for the ESP-IDF. You'll use this with the expr method to convert expressions in `<%=` `%>` to strings and send them over the wire.
+
+```cpp
+static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
+                               const char* buffer, size_t buffer_len) {
+    char buf[64];
+    httpd_handle_t hd = resp_arg->hd;
+    int fd = resp_arg->fd;
+    itoa(buffer_len, buf, 16);
+    strcat(buf, "\r\n");
+    httpd_socket_send(hd, fd, buf, strlen(buf), 0);
+    if (buffer && buffer_len) {
+        httpd_socket_send(hd, fd, buffer, buffer_len, 0);
+    }
+    httpd_socket_send(hd, fd, "\r\n", 2, 0);
+}
+```
