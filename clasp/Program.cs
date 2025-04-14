@@ -1,12 +1,13 @@
 ﻿using Cli;
+
 using System.Text;
 namespace clasp
 {
-    internal class Program
-    {
-        [CmdArg(Ordinal =0,Optional = false)]
-        static TextReader input;
-        [CmdArg(Ordinal = 1,Optional = true)]
+	internal class Program
+	{
+		[CmdArg(Ordinal = 0, Optional = false)]
+		static TextReader input;
+		[CmdArg(Ordinal = 1, Optional = true)]
 		static TextWriter output = Console.Out;
 		[CmdArg(Name = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
 		static string block = "response_block";
@@ -14,13 +15,14 @@ namespace clasp
 		static string expr = "response_expr";
 		[CmdArg(Name = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
 		static string state = "response_state";
-
-		[CmdArg(Group ="help",Name ="?",Description ="Displays this screen")]
-        static bool help = false;
+		[CmdArg(Name = "method", Optional = true, Description = "The method to wrap the code in, if specified.")]
+		static string method = null;
+		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
+		static bool help = false;
 		static string ToSZLiteral(string value)
 		{
 			int j;
-			var sb = new StringBuilder((int)(value.Length*1.5));
+			var sb = new StringBuilder((int)(value.Length * 1.5));
 			sb.Append('"');
 			for (int i = 0; i < value.Length; ++i)
 			{
@@ -59,8 +61,10 @@ namespace clasp
 		}
 		static void EmitResponseBlock(string resp)
 		{
+			var tab = !string.IsNullOrEmpty(method) ? "    " : "";
 			if (resp == null)
 			{
+				output.Write(tab);
 				output.Write(block + "(");
 				output.Write(ToSZLiteral("0\r\n\r\n"));
 				output.WriteLine($", 5, {state});");
@@ -72,6 +76,7 @@ namespace clasp
 				int len = resp.Length;
 				var str = len.ToString("X") + "\r\n";
 				int strlen = str.Length;
+				output.Write(tab);
 				output.Write(block + "(");
 				output.Write(ToSZLiteral(str + resp + "\r\n"));
 				output.Write(", ");
@@ -82,164 +87,177 @@ namespace clasp
 		}
 		static void EmitExpression(string resp)
 		{
-			output.Write(expr+"(");
+			var tab = !string.IsNullOrEmpty(method) ? "    " : "";
+			output.Write(tab);
+			output.Write(expr + "(");
 			output.Write(resp);
 			output.WriteLine($", {state});");
 			output.Flush();
 		}
 		static void EmitCodeBlock(string resp)
 		{
+			var tab = !string.IsNullOrEmpty(method) ? "    " : "";
+			output.Write(tab);
 			output.WriteLine(resp);
 			output.Flush();
 		}
 
 		static int Main(string[] args)
-        {
-#if !DEBUG
+		{
+			#if !DEBUG
 			try
 			{
-#endif
-			using (var parsed = CliUtility.ParseAndSet(args, null, typeof(Program)))
-			{
-				int line = 1;
-				var code = new StringBuilder();
-				var literal = new StringBuilder();
-				int i = input.Read();
-				int s = 0;
-				while(i!=-1)
+				#endif
+				using (var parsed = CliUtility.ParseAndSet(args, null, typeof(Program)))
 				{
-					char ch = (char)i;
-					
-					switch(s)
+					int line = 1;
+					var code = new StringBuilder();
+					var literal = new StringBuilder();
+					int i = input.Read();
+					int s = 0;
+					if (!string.IsNullOrEmpty(method))
 					{
-						case 0: // in literal body
-							if(ch=='<')
-							{
-								s = 1;
-								break;
-							}
-							literal.Append(ch);
-							break;
-						case 1:
-							if(ch!='%')
-							{
-								literal.Append('<');
+						output.WriteLine($"void {method}(void* {state}) {{");
+					}
+					while (i != -1)
+					{
+						char ch = (char)i;
+
+						switch (s)
+						{
+							case 0: // in literal body
+								if (ch == '<')
+								{
+									s = 1;
+									break;
+								}
 								literal.Append(ch);
-								s = 0;
 								break;
-							}
-							EmitResponseBlock(literal.ToString());
-							literal.Clear();
-							s = 2;
-							break;
-						case 2:
-							if(ch=='=')
-							{
+							case 1:
+								if (ch != '%')
+								{
+									literal.Append('<');
+									literal.Append(ch);
+									s = 0;
+									break;
+								}
+								EmitResponseBlock(literal.ToString());
+								literal.Clear();
+								s = 2;
+								break;
+							case 2:
+								if (ch == '=')
+								{
+									s = 3;
+								}
+								else
+								{
+									code.Append(ch);
+									s = 4;
+								}
+								break;
+							case 3: // expression
+								if (ch == '%')
+								{
+									s = 5;
+									break;
+								}
+								code.Append(ch);
+								break;
+							case 4: // code block
+								if (ch == '%')
+								{
+									s = 6;
+									break;
+								}
+								code.Append(ch);
+								break;
+							case 5:
+								if (ch == '>')
+								{
+									EmitExpression(code.ToString());
+									code.Clear();
+									s = 0;
+									break;
+								}
+								code.Append('%');
+								code.Append(ch);
 								s = 3;
-							} else
-							{
+								break;
+							case 6:
+								if (ch == '>')
+								{
+									EmitCodeBlock(code.ToString());
+									code.Clear();
+									s = 0;
+									break;
+								}
+								code.Append('%');
 								code.Append(ch);
 								s = 4;
-							}
-							break;
-						case 3: // expression
-							if (ch == '%')
-							{
-								s = 5;
 								break;
-							}
-							code.Append(ch);
-							break;
-						case 4: // code block
-							if(ch=='%')
+						}
+						if (ch == '\n')
+						{
+							++line;
+						}
+						i = input.Read();
+					}
+					switch (s)
+					{
+						case 0:
+							if (literal.Length > 0)
 							{
-								s = 6;
-								break;
+								EmitResponseBlock(literal.ToString());
 							}
-							code.Append(ch);
 							break;
-						case 5:
-							if (ch == '>')
+						case 1:
+							literal.Append('<');
+							EmitResponseBlock(literal.ToString());
+							break;
+						case 3:
+							if (code.Length > 0)
 							{
 								EmitExpression(code.ToString());
-								code.Clear();
-								s = 0;
-								break;
 							}
-							code.Append('%');
-							code.Append(ch);
-							s = 3;	
 							break;
-						case 6:
-							if (ch == '>')
+						case 4:
+							if (code.Length > 0)
 							{
 								EmitCodeBlock(code.ToString());
-								code.Clear();
-								s = 0;
-								break;
 							}
-							code.Append('%');
-							code.Append(ch);
-							s = 4;
 							break;
-					}
-					if (ch == '\n')
-					{
-						++line;
-					}
-					i = input.Read();
-				}
-				switch(s)
-				{
-					case 0:
-						if(literal.Length>0)
-						{
-							EmitResponseBlock(literal.ToString());
-						}
-						break;
-					case 1:
-						literal.Append('<');
-						EmitResponseBlock(literal.ToString());
-						break;
-					case 3:
-						if (code.Length > 0)
-						{
+						case 5:
+							code.Append('%');
 							EmitExpression(code.ToString());
-						}
-						break;
-					case 4:
-						if (code.Length > 0)
-						{
+							break;
+						case 6:
+							code.Append('%');
 							EmitCodeBlock(code.ToString());
-						}
-						break;
-					case 5:
-						code.Append('%');
-						EmitExpression(code.ToString());
-						break;
-					case 6:
-						code.Append('%');
-						EmitCodeBlock(code.ToString());
-						break;
-					default:
-						throw new Exception($"Invalid syntax in page on line {line}");
+							break;
+						default:
+							throw new Exception($"Invalid syntax in page on line {line}");
+					}
+					EmitResponseBlock(null);
+					if (!string.IsNullOrEmpty(method))
+					{
+						output.WriteLine("}");
+					}
 				}
-				EmitResponseBlock(null);
+				#if !DEBUG
 			}
-#if !DEBUG
-			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
-				Console.Error.WriteLine("Error: "+ex.Message);
+				Console.Error.WriteLine("Error: " + ex.Message);
 				return 1;
 			}
-#endif
-				if (help)
-				{
-					CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
-					return 0;
-				}
+			#endif
+			if (help)
+			{
+				CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
 				return 0;
+			}
+			return 0;
 		}
-    }
+	}
 }
