@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "clasp": {
+      "commandName": "Project",
+      "commandLineArgs": "demo.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr"
+    }
+  }
+}

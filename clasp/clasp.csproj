@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Title>CLASP</Title>
+    <Description>Generates C code from ASPish pages for use with embedded web servers</Description>
+    <Copyright>Copyright © 2025 by honey the codewitch</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="demo.clasp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
