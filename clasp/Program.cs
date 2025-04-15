@@ -64,7 +64,7 @@ namespace clasp
 			int len = resp.Length;
 			var str = len.ToString("X") + "\r\n";
 			int strlen = str.Length;
-			return ToSZLiteral(str + resp + "\r\n");
+			return str + resp + "\r\n";
 
 		}
 		static void EmitResponseBlock(string resp)
