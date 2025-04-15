@@ -164,7 +164,6 @@ static void httpd_parse_url_and_apply_args(const char* url) {
     bool has_set = false;
     char name[64];
     char value[64];
-    bool req_values[alarm_count];
     if (query != nullptr) {
         memset(req_values, 0, sizeof(req_values));
         while (1) {
