@@ -38,12 +38,12 @@ Consider the following input document. It is very much like old style ASP, but t
         <title>Alarm Control Panel</title>
     </head>
     <body>
-        <form method="get" action="."><%
-           for(size_t i = 0;i<alarm_count;++i) {
-            %><label><%=i+1%></label><input name="a" type="checkbox" value="<%=i%>" <%=alarm_values[i]?"checked":""%>/><br /><%
-           }%>
+        <form method="get" action="."><%for(size_t i = 0;i<alarm_count;++i) {
+            %>
+            <label><%=i+1%></label><input name="a" type="checkbox" value="<%=i%>" <%if(alarm_values[i]){%>checked<%}%> /><br /><%
+}%>
             <input type="submit" name="set" value="set" />
-            <input type="submit" name="get" value="get" />
+            <input type="submit" name="refresh" value="get" />
         </form>
     </body>
 </html>
@@ -52,21 +52,22 @@ Consider the following input document. It is very much like old style ASP, but t
 Executing clasp with the following command arguments: `demo.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr` will yield this output:
 
 ```cpp
-httpd_send_block("200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\n", 63, resp_arg);
+httpd_send_block("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\n", 72, resp_arg);
 httpd_send_block("E2\r\n<!DOCTYPE html>\r\n<html>\r\n    <head>\r\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n        <title>Alarm Control Panel</title>\r\n    </head>\r\n    <body>\r\n        <form method=\"get\" action=\".\">\r\n", 232, resp_arg);
-
-           for(size_t i = 0;i<alarm_count;++i) {
-
-httpd_send_block("7\r\n<label>\r\n", 12, resp_arg);
+for(size_t i = 0;i<alarm_count;++i) {
+            
+httpd_send_block("15\r\n\r\n            <label>\r\n", 27, resp_arg);
 httpd_send_expr(i+1, resp_arg);
 httpd_send_block("2F\r\n</label><input name=\"a\" type=\"checkbox\" value=\"\r\n", 53, resp_arg);
 httpd_send_expr(i, resp_arg);
 httpd_send_block("2\r\n\" \r\n", 7, resp_arg);
-httpd_send_expr(alarm_values[i]?"checked":"", resp_arg);
-httpd_send_block("8\r\n/><br />\r\n", 13, resp_arg);
+if(alarm_values[i]){
+httpd_send_block("7\r\nchecked\r\n", 12, resp_arg);
+}
+httpd_send_block("9\r\n /><br />\r\n", 14, resp_arg);
 
-           }
-httpd_send_block("9F\r\n\r\n            <input type=\"submit\" name=\"set\" value=\"set\" />\r\n            <input type=\"submit\" name=\"get\" value=\"get\" />\r\n        </form>\r\n    </body>\r\n</html>\r\n", 165, resp_arg);
+}
+httpd_send_block("A5\r\n\r\n            <input type=\"submit\" name=\"set\" value=\"set\" />\r\n            <input type=\"submit\" name=\"refresh\" value=\"get\" />\r\n        </form>\r\n    </body>\r\n</html>\r\n\r\n", 171, resp_arg);
 httpd_send_block("0\r\n\r\n", 5, resp_arg);
 ```
 
