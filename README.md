@@ -4,6 +4,30 @@ ClASP: The C Language ASP generator
 
 ClASP is a C and C++ oriented HTTP response generator that takes simple ASP-like `<%`, `<%=` and `%>` syntax and generates chunk strings to send over a socket to a browser.
 
+Usage:
+```
+clasp
+
+Generates C code from ASPish pages for use with embedded web servers
+
+Usage:
+
+clasp <inputfile> [ <outputfile> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /method <method> ]
+
+<inputfile>      The input file
+<outputfile>     The output file. Defaults to <stdout>
+<block>          The function call to send a literal block to the client. Defaults to response_block
+<expr>           The function call to send an expression to the client. Defaults to response_expr
+<state>          The variable name that holds the user state to pass to the response functions. Defaults to response_state
+<method>         The method to wrap the code in, if specified.
+
+clasp /?
+
+/?               Displays this screen
+```
+
+Consider the following input document. It is very much like old style ASP, but the code is in C/++ rather than VBScript or JScript:
+
 ```html
 <!DOCTYPE html>
 <html>
@@ -23,9 +47,8 @@ ClASP is a C and C++ oriented HTTP response generator that takes simple ASP-like
 </html>
 ```
 
-with the following command arguments: `demo.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr`
+Executing clasp with the following command arguments: `demo.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr` will yield this output:
 
-will produce this output:
 ```cpp
 httpd_send_block("E2\r\n<!DOCTYPE html>\r\n<html>\r\n    <head>\r\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n        <title>Alarm Control Panel</title>\r\n    </head>\r\n    <body>\r\n        <form method=\"get\" action=\".\">\r\n", 232, resp_arg);
 
@@ -50,7 +73,7 @@ And example of using it is here: https://github.com/codewitch-honey-crisis/core2
 
 Note that sending multiple different types of expressions requires the ability to do method overloading in your wrappers, so `<%= ... %>` can only handle a single type of data, otherwise it's C++ only.
 
-You'll probably need some sort of method to send chunked data over a socket.
+As mentioned, you'll probably need some sort of method to send chunked data over a socket.
 Here's an example for the ESP-IDF. You'll use this with the expr method to convert expressions in `<%=` `%>` to strings and send them over the wire.
 
 ```cpp

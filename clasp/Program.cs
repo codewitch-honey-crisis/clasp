@@ -9,13 +9,13 @@ namespace clasp
 		static TextReader input;
 		[CmdArg(Ordinal = 1, Optional = true)]
 		static TextWriter output = Console.Out;
-		[CmdArg(Name = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
+		[CmdArg(Name = "block", ElementName ="block", Optional = true, Description = "The function call to send a literal block to the client.")]
 		static string block = "response_block";
-		[CmdArg(Name = "expr", Optional = true, Description = "The function call to send an expression to the client.")]
+		[CmdArg(Name = "expr", ElementName ="expr", Optional = true, Description = "The function call to send an expression to the client.")]
 		static string expr = "response_expr";
-		[CmdArg(Name = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
+		[CmdArg(Name = "state", ElementName ="state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
 		static string state = "response_state";
-		[CmdArg(Name = "method", Optional = true, Description = "The method to wrap the code in, if specified.")]
+		[CmdArg(Name = "method", ElementName ="method", Optional = true, Description = "The method to wrap the code in, if specified.")]
 		static string method = null;
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		static bool help = false;
@@ -110,6 +110,11 @@ namespace clasp
 				#endif
 				using (var parsed = CliUtility.ParseAndSet(args, null, typeof(Program)))
 				{
+					if (help)
+					{
+						CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
+						return 0;
+					}
 					int line = 1;
 					var code = new StringBuilder();
 					var literal = new StringBuilder();
@@ -252,11 +257,7 @@ namespace clasp
 				return 1;
 			}
 			#endif
-			if (help)
-			{
-				CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
-				return 0;
-			}
+			
 			return 0;
 		}
 	}

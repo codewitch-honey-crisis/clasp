@@ -8,7 +8,26 @@
     <Title>CLASP</Title>
     <Description>Generates C code from ASPish pages for use with embedded web servers</Description>
     <Copyright>Copyright © 2025 by honey the codewitch</Copyright>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>$(AssemblyVersion)</FileVersion>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/codewitch-honey-crisis/clasp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>ASP;C;C++;code generation</PackageTags>
+    <PackageProjectUrl>https://github.com/codewitch-honey-crisis/clasp</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="demo.clasp">

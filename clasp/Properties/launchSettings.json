@@ -1,6 +1,10 @@
 {
   "profiles": {
-    "clasp": {
+    "help": {
+      "commandName": "Project",
+      "commandLineArgs": "/?"
+    },
+    "demo": {
       "commandName": "Project",
       "commandLineArgs": "demo.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr /method httpd_page_handler"
     }
