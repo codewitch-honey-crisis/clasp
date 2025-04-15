@@ -82,7 +82,7 @@ And example of using it is here: https://github.com/codewitch-honey-crisis/core2
 If either of these directives are present at least part of an HTTP header is generated (with or without the status line depending on `@status`)
 If either one is specified you generally should specify `<%@header name="Transfer-Encoding" value="chunked"%>` because the output from the generator will always be chunked, so without the header the HTTP output will not be correct.
 
-## Implemnentation errata
+## Implementation errata
 
 Note that sending multiple different types of expressions requires the ability to do method overloading in your wrappers, so `<%= ... %>` can only handle a single type of data, otherwise it's C++ only.
 
