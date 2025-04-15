@@ -59,6 +59,14 @@ namespace clasp
 			sb.Append('"');
 			return sb.ToString();
 		}
+		static string GenerateChunked(string resp)
+		{
+			int len = resp.Length;
+			var str = len.ToString("X") + "\r\n";
+			int strlen = str.Length;
+			return ToSZLiteral(str + resp + "\r\n");
+
+		}
 		static void EmitResponseBlock(string resp)
 		{
 			var tab = !string.IsNullOrEmpty(method) ? "    " : "";
@@ -138,6 +146,7 @@ namespace clasp
 				string dirTmp = null;
 				bool inQuot = false;
 				bool wasPastDirectives = false;
+				string headerText = null;
 				var i = input.Read();
 				var s = 0;
 				if (!string.IsNullOrEmpty(method))
@@ -161,11 +170,11 @@ namespace clasp
 								}
 								if (headers.Length > 0)
 								{
-									Emit(str+$"{headers.ToString().TrimEnd()}\r\n\r\n");
+									headerText = str + $"{headers.ToString().TrimEnd()}\r\n\r\n";
 								}
 								else
 								{
-									Emit(str+"\r\n");
+									headerText = str + "\r\n";
 								}
 							}
 							if (ch == '<')
@@ -192,11 +201,11 @@ namespace clasp
 									}
 									if (headers.Length > 0)
 									{
-										Emit(str + $"{headers.ToString().TrimEnd()}\r\n\r\n");
+										headerText=str + $"{headers.ToString().TrimEnd()}\r\n\r\n";
 									}
 									else if(hasStatus)
 									{
-										Emit(str + "\r\n");
+										headerText=str + "\r\n";
 									}
 								}
 								pastDirectives = true;
@@ -207,7 +216,15 @@ namespace clasp
 							}
 							if (pastDirectives && current.Length > 0)
 							{
-								EmitResponseBlock(current.ToString());
+								if (!string.IsNullOrEmpty(headerText))
+								{
+									Emit(headerText + GenerateChunked(current.ToString()));
+									headerText = null;
+								}
+								else
+								{
+									EmitResponseBlock(current.ToString());
+								}
 								current.Clear();
 							}
 							s = 2;
@@ -225,11 +242,11 @@ namespace clasp
 									}
 									if (headers.Length > 0)
 									{
-										Emit(str + $"{headers.ToString().TrimEnd()}\r\n\r\n");
+										headerText = str + $"{headers.ToString().TrimEnd()}\r\n\r\n";
 									}
 									else
 									{
-										Emit(str + "\r\n");
+										headerText = str + "\r\n";
 									}
 								}
 								pastDirectives = true;
@@ -268,6 +285,11 @@ namespace clasp
 						case 5:
 							if (ch == '>')
 							{
+								if(!string.IsNullOrEmpty(headerText))
+								{
+									Emit(headerText);
+									headerText = null;
+								}
 								EmitExpression(current.ToString());
 								current.Clear();
 								s = 0;
@@ -280,6 +302,11 @@ namespace clasp
 						case 6:
 							if (ch == '>')
 							{
+								if (!string.IsNullOrEmpty(headerText))
+								{
+									Emit(headerText);
+									headerText = null;
+								}
 								EmitCodeBlock(current.ToString());
 								current.Clear();
 								s = 0;
@@ -445,7 +472,22 @@ namespace clasp
 					case 0:
 						if (current.Length > 0)
 						{
-							EmitResponseBlock(current.ToString());
+							if (!string.IsNullOrEmpty(headerText))
+							{
+								Emit(headerText + GenerateChunked(current.ToString()));
+								headerText = null;
+							}
+							else
+							{
+								EmitResponseBlock(current.ToString());
+							}
+						} else
+						{
+							if (!string.IsNullOrEmpty(headerText))
+							{
+								Emit(headerText);
+								headerText = null;
+							}
 						}
 						break;
 					case 1:
@@ -453,22 +495,42 @@ namespace clasp
 						EmitResponseBlock(current.ToString());
 						break;
 					case 3:
+						if (!string.IsNullOrEmpty(headerText))
+						{
+							Emit(headerText);
+							headerText = null;
+						}
 						if (current.Length > 0)
 						{
 							EmitExpression(current.ToString());
 						}
 						break;
 					case 4:
+						if (!string.IsNullOrEmpty(headerText))
+						{
+							Emit(headerText);
+							headerText = null;
+						}
 						if (current.Length > 0)
 						{
 							EmitCodeBlock(current.ToString());
 						}
 						break;
 					case 5:
+						if (!string.IsNullOrEmpty(headerText))
+						{
+							Emit(headerText);
+							headerText = null;
+						}
 						current.Append('%');
 						EmitExpression(current.ToString());
 						break;
 					case 6:
+						if (!string.IsNullOrEmpty(headerText))
+						{
+							Emit(headerText);
+							headerText = null;
+						}
 						current.Append('%');
 						EmitCodeBlock(current.ToString());
 						break;
