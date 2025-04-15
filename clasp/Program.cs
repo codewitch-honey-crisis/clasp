@@ -9,13 +9,13 @@ namespace clasp
 		static TextReader input;
 		[CmdArg(Ordinal = 1, Optional = true)]
 		static TextWriter output = Console.Out;
-		[CmdArg(Name = "block", ElementName ="block", Optional = true, Description = "The function call to send a literal block to the client.")]
+		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
 		static string block = "response_block";
-		[CmdArg(Name = "expr", ElementName ="expr", Optional = true, Description = "The function call to send an expression to the client.")]
+		[CmdArg(Name = "expr", ElementName = "expr", Optional = true, Description = "The function call to send an expression to the client.")]
 		static string expr = "response_expr";
-		[CmdArg(Name = "state", ElementName ="state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
+		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
 		static string state = "response_state";
-		[CmdArg(Name = "method", ElementName ="method", Optional = true, Description = "The method to wrap the code in, if specified.")]
+		[CmdArg(Name = "method", ElementName = "method", Optional = true, Description = "The method to wrap the code in, if specified.")]
 		static string method = null;
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		static bool help = false;
@@ -101,163 +101,395 @@ namespace clasp
 			output.WriteLine(resp);
 			output.Flush();
 		}
-
+		static void Emit(string text)
+		{
+			var tab = !string.IsNullOrEmpty(method) ? "    " : "";
+			if (!string.IsNullOrEmpty(text))
+			{
+				output.Write(tab);
+				output.Write(block + "(");
+				output.Write(ToSZLiteral(text));
+				output.WriteLine($", {text.Length}, {state});");
+				output.Flush();
+			}
+		}
 		static int Main(string[] args)
 		{
-			#if !DEBUG
+#if !DEBUG
 			try
 			{
-				#endif
-				using (var parsed = CliUtility.ParseAndSet(args, null, typeof(Program)))
+#endif
+			using (var parsed = CliUtility.ParseAndSet(args, null, typeof(Program)))
+			{
+				if (help)
 				{
-					if (help)
-					{
-						CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
-						return 0;
-					}
-					int line = 1;
-					var code = new StringBuilder();
-					var literal = new StringBuilder();
-					int i = input.Read();
-					int s = 0;
-					if (!string.IsNullOrEmpty(method))
-					{
-						output.WriteLine($"void {method}(void* {state}) {{");
-					}
-					while (i != -1)
-					{
-						char ch = (char)i;
+					CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
+					return 0;
+				}
+				var hasStatus = false;
+				var statusCode = 0;
+				string statusText = null;
+				var headers = new StringBuilder();
+				var pastDirectives = false;
+				var line = 1;
+				var current = new StringBuilder();
+				var dirArgs = new Dictionary<string, string>();
+				string dirName = null;
+				string dirTmp = null;
+				bool inQuot = false;
+				bool wasPastDirectives = false;
+				var i = input.Read();
+				var s = 0;
+				if (!string.IsNullOrEmpty(method))
+				{
+					output.WriteLine($"void {method}(void* {state}) {{");
+				}
+				while (i != -1)
+				{
+					char ch = (char)i;
 
-						switch (s)
-						{
-							case 0: // in literal body
-								if (ch == '<')
+					switch (s)
+					{
+						case 0: // in literal body
+							if(pastDirectives && !wasPastDirectives)
+							{
+								wasPastDirectives = true;
+								var str = "";
+								if (hasStatus)
 								{
-									s = 1;
-									break;
+									str = $"HTTP/1.1 {statusCode} {statusText}\r\n";
 								}
-								literal.Append(ch);
-								break;
-							case 1:
-								if (ch != '%')
+								if (headers.Length > 0)
 								{
-									literal.Append('<');
-									literal.Append(ch);
-									s = 0;
-									break;
-								}
-								EmitResponseBlock(literal.ToString());
-								literal.Clear();
-								s = 2;
-								break;
-							case 2:
-								if (ch == '=')
-								{
-									s = 3;
+									Emit(str+$"{headers.ToString().TrimEnd()}\r\n\r\n");
 								}
 								else
 								{
-									code.Append(ch);
-									s = 4;
+									Emit(str+"\r\n");
 								}
-								break;
-							case 3: // expression
-								if (ch == '%')
-								{
-									s = 5;
-									break;
-								}
-								code.Append(ch);
-								break;
-							case 4: // code block
-								if (ch == '%')
-								{
-									s = 6;
-									break;
-								}
-								code.Append(ch);
-								break;
-							case 5:
-								if (ch == '>')
-								{
-									EmitExpression(code.ToString());
-									code.Clear();
-									s = 0;
-									break;
-								}
-								code.Append('%');
-								code.Append(ch);
-								s = 3;
-								break;
-							case 6:
-								if (ch == '>')
-								{
-									EmitCodeBlock(code.ToString());
-									code.Clear();
-									s = 0;
-									break;
-								}
-								code.Append('%');
-								code.Append(ch);
-								s = 4;
-								break;
-						}
-						if (ch == '\n')
-						{
-							++line;
-						}
-						i = input.Read();
-					}
-					switch (s)
-					{
-						case 0:
-							if (literal.Length > 0)
-							{
-								EmitResponseBlock(literal.ToString());
 							}
+							if (ch == '<')
+							{
+								s = 1;
+								break;
+							}
+							if (!pastDirectives && !char.IsWhiteSpace(ch))
+							{
+								pastDirectives = true;
+							}
+							current.Append(ch);
 							break;
 						case 1:
-							literal.Append('<');
-							EmitResponseBlock(literal.ToString());
-							break;
-						case 3:
-							if (code.Length > 0)
+							if (ch != '%')
 							{
-								EmitExpression(code.ToString());
+								if (!wasPastDirectives)
+								{
+									wasPastDirectives = true;
+									var str = "";
+									if (hasStatus)
+									{
+										str = $"HTTP/1.1 {statusCode} {statusText}\r\n";
+									}
+									if (headers.Length > 0)
+									{
+										Emit(str + $"{headers.ToString().TrimEnd()}\r\n\r\n");
+									}
+									else if(hasStatus)
+									{
+										Emit(str + "\r\n");
+									}
+								}
+								pastDirectives = true;
+								current.Append('<');
+								current.Append(ch);
+								s = 0;
+								break;
 							}
-							break;
-						case 4:
-							if (code.Length > 0)
+							if (pastDirectives && current.Length > 0)
 							{
-								EmitCodeBlock(code.ToString());
+								EmitResponseBlock(current.ToString());
+								current.Clear();
 							}
+							s = 2;
+							break;
+						case 2:
+							if (ch == '=')
+							{
+								if (!wasPastDirectives)
+								{
+									wasPastDirectives = true;
+									var str = "";
+									if (hasStatus)
+									{
+										str = $"HTTP/1.1 {statusCode} {statusText}\r\n";
+									}
+									if (headers.Length > 0)
+									{
+										Emit(str + $"{headers.ToString().TrimEnd()}\r\n\r\n");
+									}
+									else
+									{
+										Emit(str + "\r\n");
+									}
+								}
+								pastDirectives = true;
+								s = 3;
+								break;
+							}
+							else if (ch == '@')
+							{
+								if (pastDirectives)
+								{
+									throw new Exception($"Illegal directive on line {line}. Directives must precede any content");
+								}
+								s = 7;
+								break;
+							}
+							pastDirectives = false;
+							current.Append(ch);
+							s = 4;
+							break;
+						case 3: // expression
+							if (ch == '%')
+							{
+								s = 5;
+								break;
+							}
+							current.Append(ch);
+							break;
+						case 4: // code block
+							if (ch == '%')
+							{
+								s = 6;
+								break;
+							}
+							current.Append(ch);
 							break;
 						case 5:
-							code.Append('%');
-							EmitExpression(code.ToString());
+							if (ch == '>')
+							{
+								EmitExpression(current.ToString());
+								current.Clear();
+								s = 0;
+								break;
+							}
+							current.Append('%');
+							current.Append(ch);
+							s = 3;
 							break;
 						case 6:
-							code.Append('%');
-							EmitCodeBlock(code.ToString());
+							if (ch == '>')
+							{
+								EmitCodeBlock(current.ToString());
+								current.Clear();
+								s = 0;
+								break;
+							}
+							current.Append('%');
+							current.Append(ch);
+							s = 4;
 							break;
-						default:
-							throw new Exception($"Invalid syntax in page on line {line}");
+						case 7: // directive
+							if (!char.IsWhiteSpace(ch))
+							{
+								if (ch == '%')
+								{
+									throw new Exception($"Illegal % found in directive on line {line}");
+								}
+								s = 8;
+								dirArgs.Clear();
+								current.Clear();
+								current.Append(ch);
+							}
+							break;
+						case 8:
+							if (ch != '%' && !char.IsWhiteSpace(ch))
+							{
+								current.Append(ch);
+								break;
+							}
+							dirName = current.ToString();
+							current.Clear();
+							if (ch == '%') { s = 14; break; }
+							s = 9;
+							break;
+						case 9: // name part of directive name value pair
+							if (ch != '=' && !char.IsWhiteSpace(ch))
+							{
+								current.Append(ch);
+								break;
+							}
+							dirTmp = current.ToString();
+							current.Clear();
+							s = 10;
+							break;
+						case 10:
+							if (!char.IsWhiteSpace(ch))
+							{
+								inQuot = false;
+								if (ch == '\"')
+								{
+									inQuot = true;
+								}
+								else
+								{
+									current.Append(ch);
+								}
+								s = 11;
+							}
+							break;
+						case 11:
+							if (inQuot)
+							{
+								if (ch == '\"')
+								{
+									inQuot = false;
+									s = 12;
+									break;
+								}
+								current.Append(ch); 
+								break;
+							}
+							
+							if(ch=='%' || char.IsWhiteSpace((char)ch)) {
+								s = 12;
+								break;
+							}
+							current.Append(ch);
+							break;
+						case 12:
+							dirArgs.Add(dirTmp, current.ToString());
+							dirTmp = null;
+							inQuot = false;
+							current.Clear();
+							if(ch=='%')
+							{
+								s = 14;
+								break;
+							}
+							s = 13;
+							break;
+						case 13:
+							if(!char.IsWhiteSpace(ch))
+							{
+								s = 9;
+								current.Append(ch);
+							}
+							break;
+						case 14: // end directive
+							if (ch != '>')
+							{
+								throw new Exception($"Illegal % in directive on line {line}.");
+							}
+							switch(dirName)
+							{
+								case "status":
+									if(!dirArgs.ContainsKey("code"))
+									{
+										throw new Exception($"Status directive missing required \"code\" argument on line {line}");
+									}
+									if (!dirArgs.ContainsKey("text"))
+									{
+										throw new Exception($"Status directive missing required \"text\" argument on line {line}");
+									}
+									var c = dirArgs["code"];
+									int cc;
+									if(!int.TryParse(c, out cc) || cc<0|| cc>999) 
+									{
+										throw new Exception($"Illegal code argument in status directive on line {line}");
+									}
+									var t = dirArgs["text"];
+									if (string.IsNullOrEmpty(t))
+									{
+										throw new Exception($"Text argument must not be empty in status directive on line {line}");
+									}
+									hasStatus = true;
+									statusCode = cc;
+									statusText = t;
+									break;
+								case "header":
+									if (!dirArgs.ContainsKey("name"))
+									{
+										throw new Exception($"Header directive missing required \"name\" argument on line {line}");
+									}
+									if (!dirArgs.ContainsKey("value"))
+									{
+										throw new Exception($"Header directive missing required \"value\" argument on line {line}");
+									}
+									var n = dirArgs["name"];
+									if (string.IsNullOrEmpty(n))
+									{
+										throw new Exception($"Name argument must not be empty in header directive on line {line}");
+									}
+									var v = dirArgs["value"];
+									if (string.IsNullOrEmpty(v))
+									{
+										throw new Exception($"Value argument must not be empty in status directive on line {line}");
+									}
+									headers.Append($"{n}: {v}\r\n");
+									break;
+							}
+							
+							dirArgs = new Dictionary<string, string>();
+							s = 0;
+							break;
 					}
-					EmitResponseBlock(null);
-					if (!string.IsNullOrEmpty(method))
+					if (ch == '\n')
 					{
-						output.WriteLine("}");
+						++line;
 					}
+					i = input.Read();
 				}
-				#if !DEBUG
+				switch (s)
+				{
+					case 0:
+						if (current.Length > 0)
+						{
+							EmitResponseBlock(current.ToString());
+						}
+						break;
+					case 1:
+						current.Append('<');
+						EmitResponseBlock(current.ToString());
+						break;
+					case 3:
+						if (current.Length > 0)
+						{
+							EmitExpression(current.ToString());
+						}
+						break;
+					case 4:
+						if (current.Length > 0)
+						{
+							EmitCodeBlock(current.ToString());
+						}
+						break;
+					case 5:
+						current.Append('%');
+						EmitExpression(current.ToString());
+						break;
+					case 6:
+						current.Append('%');
+						EmitCodeBlock(current.ToString());
+						break;
+					default:
+						throw new Exception($"Invalid syntax in page on line {line}");
+				}
+				EmitResponseBlock(null);
+				if (!string.IsNullOrEmpty(method))
+				{
+					output.WriteLine("}");
+				}
+			}
+#if !DEBUG
 			}
 			catch (Exception ex)
 			{
 				Console.Error.WriteLine("Error: " + ex.Message);
 				return 1;
 			}
-			#endif
-			
+#endif
+
 			return 0;
 		}
 	}
