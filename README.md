@@ -165,7 +165,6 @@ static void httpd_parse_url_and_apply_args(const char* url) {
     char name[64];
     char value[64];
     if (query != nullptr) {
-        memset(req_values, 0, sizeof(req_values));
         while (1) {
             query = httpd_crack_query(query, name, value);
             if (!query) {
