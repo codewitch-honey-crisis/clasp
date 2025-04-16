@@ -80,7 +80,7 @@ And example of using it is here: https://github.com/codewitch-honey-crisis/core2
 
 If either of these directives are present at least part of an HTTP header is generated (with or without the status line depending on `@status`)
 
-If `auto-headers` is enabled (which it is by default), then static content will get a `Content-Length` header and dynamic content will get `Transfer-Encoding: chunked`
+If `auto-headers` is enabled (which it is by default) and either headers or a status is specified then static content will get a `Content-Length` header and dynamic content will get `Transfer-Encoding: chunked` 
 
 ## Static vs Dynamic content encoding
 
