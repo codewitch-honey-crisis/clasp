@@ -121,6 +121,44 @@ namespace clasp
 				output.Flush();
 			}
 		}
+		static bool ScanForCodeBlocks(string s)
+		{
+			for (int i = 0; i < s.Length; i++)
+			{
+				char ch = s[i];
+				if (s.Length > i + 3)
+				{
+					if (ch == '<')
+					{
+						++i;
+						ch = s[i];
+						if (ch == '%')
+						{
+							++i;
+							ch = s[i];
+							if (ch != '@')
+							{
+								return true;
+							}
+						}
+					}
+				}
+			}
+			return false;
+		}
+		static int StaticLen(string s)
+		{
+			var i = s.LastIndexOf("%>");
+			if (i == -1)
+			{
+				i = 0;
+			}
+			else
+			{
+				i += 2;
+			}
+			return s.Length-i;
+		}
 		static int Main(string[] args)
 		{
 #if !DEBUG
@@ -147,7 +185,14 @@ namespace clasp
 				bool inQuot = false;
 				bool wasPastDirectives = false;
 				string headerText = null;
-				var i = input.Read();
+				var inputString = input.ReadToEnd();
+				var inputBuffer = new StringReader(inputString);
+				var autoHeaders = true;
+				var hasContentLength = false;
+				var hasTransferEncodingChunked = false;
+				var isStatic = !ScanForCodeBlocks(inputString);
+				var len = StaticLen(inputString);
+				var i = inputBuffer.Read();
 				var s = 0;
 				if (!string.IsNullOrEmpty(method))
 				{
@@ -156,7 +201,6 @@ namespace clasp
 				while (i != -1)
 				{
 					char ch = (char)i;
-
 					switch (s)
 					{
 						case 0: // in literal body
@@ -170,11 +214,11 @@ namespace clasp
 								}
 								if (headers.Length > 0)
 								{
-									headerText = str + $"{headers.ToString().TrimEnd()}\r\n\r\n";
+									headerText = str + $"{headers.ToString().TrimEnd()}\r\n";
 								}
 								else
 								{
-									headerText = str + "\r\n";
+									headerText = str ;
 								}
 							}
 							if (ch == '<')
@@ -201,12 +245,12 @@ namespace clasp
 									}
 									if (headers.Length > 0)
 									{
-										headerText=str + $"{headers.ToString().TrimEnd()}\r\n\r\n";
-									}
-									else if(hasStatus)
+										headerText=str + $"{headers.ToString().TrimEnd()}\r\n";
+									} else
 									{
-										headerText=str + "\r\n";
+										headerText = str;
 									}
+									
 								}
 								pastDirectives = true;
 								current.Append('<');
@@ -218,7 +262,15 @@ namespace clasp
 							{
 								if (!string.IsNullOrEmpty(headerText))
 								{
-									Emit(headerText + GenerateChunked(current.ToString()));
+									if(autoHeaders)
+									{
+										if(!hasContentLength&&!hasTransferEncodingChunked)
+										{
+											headerText += "Transfer-Encoding: chunked\r\n";
+											hasTransferEncodingChunked = true;
+										}
+									}
+									Emit(headerText+"\r\n" +GenerateChunked(current.ToString()));
 									headerText = null;
 								}
 								else
@@ -242,12 +294,13 @@ namespace clasp
 									}
 									if (headers.Length > 0)
 									{
-										headerText = str + $"{headers.ToString().TrimEnd()}\r\n\r\n";
+										headerText = str + $"{headers.ToString().TrimEnd()}\r\n";
 									}
 									else
 									{
-										headerText = str + "\r\n";
+										headerText = str;
 									}
+
 								}
 								pastDirectives = true;
 								s = 3;
@@ -287,6 +340,14 @@ namespace clasp
 							{
 								if(!string.IsNullOrEmpty(headerText))
 								{
+									if (autoHeaders)
+									{
+										if (!hasContentLength && !hasTransferEncodingChunked)
+										{
+											headerText += "Transfer-Encoding: chunked\r\n";
+											hasTransferEncodingChunked = true;
+										}
+									}
 									Emit(headerText);
 									headerText = null;
 								}
@@ -304,7 +365,15 @@ namespace clasp
 							{
 								if (!string.IsNullOrEmpty(headerText))
 								{
-									Emit(headerText);
+									if (autoHeaders)
+									{
+										if (!hasContentLength && !hasTransferEncodingChunked)
+										{
+											headerText += "Transfer-Encoding: chunked\r\n";
+											hasTransferEncodingChunked = true;
+										}
+									}
+									Emit(headerText+"\r\n");
 									headerText = null;
 								}
 								EmitCodeBlock(current.ToString());
@@ -430,6 +499,12 @@ namespace clasp
 									{
 										throw new Exception($"Text argument must not be empty in status directive on line {line}");
 									}
+									string ah;
+									bool b;
+									if(dirArgs.TryGetValue("auto-headers",out ah) && bool.TryParse(ah,out b) && !b)
+									{
+										autoHeaders = false;
+									}
 									hasStatus = true;
 									statusCode = cc;
 									statusText = t;
@@ -453,6 +528,18 @@ namespace clasp
 									{
 										throw new Exception($"Value argument must not be empty in status directive on line {line}");
 									}
+									if(0==string.Compare(n,"Transfer-Encoding",StringComparison.OrdinalIgnoreCase))
+									{
+										if (0 != string.Compare(v, "chunked", StringComparison.OrdinalIgnoreCase))
+										{
+											throw new NotSupportedException($"Only chunked transfer encoding is supported {line}");
+										}
+										hasTransferEncodingChunked = true;
+									}
+									if (0 == string.Compare(n, "Content-Length", StringComparison.OrdinalIgnoreCase))
+									{
+										hasContentLength = true;
+									}
 									headers.Append($"{n}: {v}\r\n");
 									break;
 							}
@@ -465,7 +552,8 @@ namespace clasp
 					{
 						++line;
 					}
-					i = input.Read();
+
+					i = inputBuffer.Read();
 				}
 				switch (s)
 				{
@@ -474,30 +562,80 @@ namespace clasp
 						{
 							if (!string.IsNullOrEmpty(headerText))
 							{
-								Emit(headerText + GenerateChunked(current.ToString()));
+								if (autoHeaders)
+								{
+									if (!hasContentLength && !hasTransferEncodingChunked)
+									{
+										if (!isStatic)
+										{
+											headerText += "Transfer-Encoding: chunked\r\n";
+											hasTransferEncodingChunked = true;
+										} else
+										{
+											headerText += $"Content-Length: {len.ToString()}\r\n";
+											hasContentLength = true;
+										}
+									}
+								}
+								if (!isStatic)
+								{
+									Emit(headerText + "\r\n" + GenerateChunked(current.ToString()));
+								} else
+								{
+									Emit(headerText + "\r\n" + current.ToString());
+								}
 								headerText = null;
 							}
 							else
 							{
-								EmitResponseBlock(current.ToString());
+								if (!isStatic)
+								{
+									EmitResponseBlock(current.ToString());
+								} else
+								{
+									Emit(current.ToString());
+								}
 							}
 						} else
 						{
 							if (!string.IsNullOrEmpty(headerText))
 							{
-								Emit(headerText);
+								if (autoHeaders)
+								{
+									if (!hasContentLength && !hasTransferEncodingChunked)
+									{
+										headerText += "Transfer-Encoding: chunked\r\n";
+										hasTransferEncodingChunked = true;
+									}
+								}
+								Emit(headerText+"\r\n");
 								headerText = null;
 							}
 						}
 						break;
 					case 1:
 						current.Append('<');
-						EmitResponseBlock(current.ToString());
+						if (isStatic)
+						{
+							Emit(current.ToString());
+						}
+						else
+						{
+							EmitResponseBlock(current.ToString());
+						}
 						break;
 					case 3:
 						if (!string.IsNullOrEmpty(headerText))
 						{
-							Emit(headerText);
+							if (autoHeaders)
+							{
+								if (!hasContentLength && !hasTransferEncodingChunked)
+								{
+									headerText += "Transfer-Encoding: chunked\r\n";
+									hasTransferEncodingChunked = true;
+								}
+							}
+							Emit(headerText+"\r\n");
 							headerText = null;
 						}
 						if (current.Length > 0)
@@ -508,7 +646,15 @@ namespace clasp
 					case 4:
 						if (!string.IsNullOrEmpty(headerText))
 						{
-							Emit(headerText);
+							if (autoHeaders)
+							{
+								if (!hasContentLength && !hasTransferEncodingChunked)
+								{
+									headerText += "Transfer-Encoding: chunked\r\n";
+									hasTransferEncodingChunked = true;
+								}
+							}
+							Emit(headerText+"\r\n");
 							headerText = null;
 						}
 						if (current.Length > 0)
@@ -519,7 +665,15 @@ namespace clasp
 					case 5:
 						if (!string.IsNullOrEmpty(headerText))
 						{
-							Emit(headerText);
+							if (autoHeaders)
+							{
+								if (!hasContentLength && !hasTransferEncodingChunked)
+								{
+									headerText += "Transfer-Encoding: chunked\r\n";
+									hasTransferEncodingChunked = true;
+								}
+							}
+							Emit(headerText + "\r\n");
 							headerText = null;
 						}
 						current.Append('%');
@@ -528,7 +682,15 @@ namespace clasp
 					case 6:
 						if (!string.IsNullOrEmpty(headerText))
 						{
-							Emit(headerText);
+							if (autoHeaders)
+							{
+								if (!hasContentLength && !hasTransferEncodingChunked)
+								{
+									headerText += "Transfer-Encoding: chunked\r\n";
+									hasTransferEncodingChunked = true;
+								}
+							}
+							Emit(headerText + "\r\n");
 							headerText = null;
 						}
 						current.Append('%');
@@ -537,7 +699,10 @@ namespace clasp
 					default:
 						throw new Exception($"Invalid syntax in page on line {line}");
 				}
-				EmitResponseBlock(null);
+				if (hasTransferEncodingChunked)
+				{
+					EmitResponseBlock(null);
+				}
 				if (!string.IsNullOrEmpty(method))
 				{
 					output.WriteLine("}");

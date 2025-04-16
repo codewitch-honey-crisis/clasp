@@ -32,8 +32,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="demo.clasp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Update="page.clasp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="static.clasp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

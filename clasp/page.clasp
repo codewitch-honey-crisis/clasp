@@ -1,6 +1,5 @@
 ﻿<%@status code="200" text="OK"%>
-<%@header name="Content-Type" value="text/html"%>
-<%@header name="Transfer-Encoding" value="chunked"%><!DOCTYPE html>
+<%@header name="Content-Type" value="text/html"%><!DOCTYPE html>
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
