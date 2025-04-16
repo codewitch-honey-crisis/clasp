@@ -76,11 +76,15 @@ And example of using it is here: https://github.com/codewitch-honey-crisis/core2
 
 ## Directives
 
-- `@status` - if inidicated, emits an HTTP status line at the top of the content - arguments are `code` and `text`
+- `@status` - if inidicated, emits an HTTP status line at the top of the content - arguments are `code` and `text`. Optionally you can specify `auto-headers="false"` to disable the generation of Content-Length or Transfer-Encoding headers
 - `@header` - adds an HTTP header to the output. arguments are `name` and `value`
 
 If either of these directives are present at least part of an HTTP header is generated (with or without the status line depending on `@status`)
-If either one is specified you generally should specify `<%@header name="Transfer-Encoding" value="chunked"%>` because the output from the generator will always be chunked, so without the header the HTTP output will not be correct.
+If `auto-headers`` is enabled (which it is by default), then static content will get a `Content-Length` header and dynamic content will get `Transfer-Encoding: chunked`
+
+## Static vs Dynamic content encoding
+
+If the page has code or expression segments in it, the entire output will be transformed into HTTP chunked format. Otherwise no transformation occurs
 
 ## Implementation errata
 
