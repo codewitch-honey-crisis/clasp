@@ -30,8 +30,7 @@ Consider the following input document. It is very much like old style ASP, but t
 
 ```html
 <%@status code="200" text="OK"%>
-<%@header name="Content-Type" value="text/html"%>
-<%@header name="Transfer-Encoding" value="chunked"%><!DOCTYPE html>
+<%@header name="Content-Type" value="text/html"%><!DOCTYPE html>
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -80,7 +79,8 @@ And example of using it is here: https://github.com/codewitch-honey-crisis/core2
 - `@header` - adds an HTTP header to the output. arguments are `name` and `value`
 
 If either of these directives are present at least part of an HTTP header is generated (with or without the status line depending on `@status`)
-If `auto-headers`` is enabled (which it is by default), then static content will get a `Content-Length` header and dynamic content will get `Transfer-Encoding: chunked`
+
+If `auto-headers` is enabled (which it is by default), then static content will get a `Content-Length` header and dynamic content will get `Transfer-Encoding: chunked`
 
 ## Static vs Dynamic content encoding
 
