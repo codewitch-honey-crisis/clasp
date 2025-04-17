@@ -90,28 +90,11 @@ If the page has code or expression segments in it, the entire output will be tra
 
 Note that sending multiple different types of expressions requires the ability to do method overloading in your wrappers, so `<%= ... %>` can only handle a single type of data, otherwise it's C++ only.
 
-As mentioned, you'll probably need some sort of method to send chunked data over a socket.
-Here's an example for the ESP-IDF. You'll use this with the expr method to convert expressions in `<%=` `%>` to strings and send them over the wire.
+As mentioned, you'll probably need some sort of method to send chunked data over a socket, plus thin wrappers for sending over a socket.
 
-```cpp
-static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
-                               const char* buffer, size_t buffer_len) {
-    char buf[64];
-    httpd_handle_t hd = resp_arg->hd;
-    int fd = resp_arg->fd;
-    itoa(buffer_len, buf, 16);
-    strcat(buf, "\r\n");
-    httpd_socket_send(hd, fd, buf, strlen(buf), 0);
-    if (buffer && buffer_len) {
-        httpd_socket_send(hd, fd, buffer, buffer_len, 0);
-    }
-    httpd_socket_send(hd, fd, "\r\n", 2, 0);
-}
-```
+For an example of using it from your code (ESP-IDF example) see the `esp32_www` project in this repo
 
-For an example of using it from your code (again, ESP-IDF example) see the `esp32_www` project in this repo
-
-Here's some basic ESP-IDF boilerplate, just to get a feel for it.
+Here's some basic ESP-IDF boilerplate, just to get a feel for it. Note that ClASP can work with any embedded framework, but the ESP-IDF presents an accessible avenue for an example, ESP32s being cheap and widely available.
 ```cpp
 
 struct httpd_async_resp_arg {
