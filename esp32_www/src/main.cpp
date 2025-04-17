@@ -10,11 +10,11 @@
 #define SD_PORT SPI3_HOST
 #define SD_CS 4
 #endif
+#include <math.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
-#include <math.h>
 #ifdef M5STACK_CORE2
-#include <esp_i2c.hpp>  // i2c initialization
+#include <esp_i2c.hpp>        // i2c initialization
 #include <m5core2_power.hpp>  // AXP192 power management (core2)
 #endif
 #include "driver/gpio.h"
@@ -27,7 +27,7 @@
 #include "nvs_flash.h"
 // these are globals we use in the page
 
-static const float example_star_rating=3.8;
+static const float example_star_rating = 3.8;
 
 static void httpd_send_block(const char* data, size_t len, void* arg);
 static void httpd_send_expr(int expr, void* arg);
@@ -39,13 +39,13 @@ static void httpd_send_expr(const char* expr, void* arg);
 #ifdef M5STACK_CORE2
 using namespace esp_idf;  // devices
 #endif
+
 static constexpr const EventBits_t wifi_connected_bit = BIT0;
 static constexpr const EventBits_t wifi_fail_bit = BIT1;
 static EventGroupHandle_t wifi_event_group = NULL;
 static char wifi_ssid[65];
 static char wifi_pass[129];
 static esp_ip4_addr_t wifi_ip;
-
 static size_t wifi_retry_count = 0;
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data) {
@@ -140,22 +140,6 @@ struct httpd_async_resp_arg {
     httpd_handle_t hd;
     int fd;
 };
-static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
-                               const char* buffer, size_t buffer_len) {
-    char buf[64];
-    puts(buffer);
-    httpd_handle_t hd = resp_arg->hd;
-    int fd = resp_arg->fd;
-    if (buffer && buffer_len) {
-        itoa(buffer_len, buf, 16);
-        strcat(buf, "\r\n");
-        httpd_socket_send(hd, fd, buf, strlen(buf), 0);
-        httpd_socket_send(hd, fd, buffer, buffer_len, 0);
-        httpd_socket_send(hd, fd, "\r\n", 2, 0);
-        return;
-    }
-    httpd_socket_send(hd, fd, "0\r\n\r\n", 5, 0);
-}
 static const char* httpd_crack_query(const char* url_part, char* name,
                                      char* value) {
     if (url_part == nullptr || !*url_part) return nullptr;
@@ -201,6 +185,23 @@ static void httpd_parse_url(const char* url) {
         }
     }
 }
+static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
+                               const char* buffer, size_t buffer_len) {
+    char buf[64];
+    puts(buffer);
+    httpd_handle_t hd = resp_arg->hd;
+    int fd = resp_arg->fd;
+    if (buffer && buffer_len) {
+        itoa(buffer_len, buf, 16);
+        strcat(buf, "\r\n");
+        httpd_socket_send(hd, fd, buf, strlen(buf), 0);
+        httpd_socket_send(hd, fd, buffer, buffer_len, 0);
+        httpd_socket_send(hd, fd, "\r\n", 2, 0);
+        return;
+    }
+    httpd_socket_send(hd, fd, "0\r\n\r\n", 5, 0);
+}
+
 static void httpd_send_block(const char* data, size_t len, void* arg) {
     if (!data || !*data || !len) {
         return;
@@ -217,7 +218,7 @@ static void httpd_send_expr(int expr, void* arg) {
 static void httpd_send_expr(float expr, void* arg) {
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     char buf[64];
-    sprintf(buf,"%0.1f",expr);
+    sprintf(buf, "%0.1f", expr);
     httpd_send_chunked(resp_arg, buf, strlen(buf));
 }
 static void httpd_send_expr(const char* expr, void* arg) {
@@ -227,7 +228,6 @@ static void httpd_send_expr(const char* expr, void* arg) {
     }
     httpd_send_chunked(resp_arg, expr, strlen(expr));
 }
-
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
     httpd_async_resp_arg* resp_arg =
         (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
@@ -253,10 +253,11 @@ static void httpd_init() {
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
     ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
-    
-    for(size_t i = 0;i<HTTPD_RESPONSE_HANDLER_COUNT;++i) {
-        printf("Registering %s\n",httpd_response_handlers[i].path);
-        httpd_uri_t handler = {.uri = httpd_response_handlers[i].path_encoded,
+
+    for (size_t i = 0; i < HTTPD_RESPONSE_HANDLER_COUNT; ++i) {
+        printf("Registering %s\n", httpd_response_handlers[i].path);
+        httpd_uri_t handler = {
+            .uri = httpd_response_handlers[i].path_encoded,
             .method = HTTP_GET,
             .handler = httpd_request_handler,
             .user_ctx = (void*)httpd_response_handlers[i].handler};
@@ -272,6 +273,7 @@ static void httpd_end() {
     vSemaphoreDelete(httpd_ui_sync);
     httpd_ui_sync = nullptr;
 }
+
 #ifdef M5STACK_CORE2
 static void power_init() {
     // for AXP192 power management
@@ -281,6 +283,7 @@ static void power_init() {
     power.lcd_voltage(3.0);
 }
 #endif
+
 #ifdef SPI_PORT
 static void spi_init() {
     spi_bus_config_t buscfg;
@@ -291,11 +294,12 @@ static void spi_init() {
     buscfg.quadwp_io_num = -1;
     buscfg.quadhd_io_num = -1;
 
-    buscfg.max_transfer_sz =512+8;
-        
+    buscfg.max_transfer_sz = 512 + 8;
+
     // Initialize the SPI bus on VSPI (SPI3)
     spi_bus_initialize(SPI_PORT, &buscfg, SPI_DMA_CH_AUTO);
 }
+
 #ifdef SD_CS
 static sdmmc_card_t* sd_card = nullptr;
 static bool sd_init() {
@@ -360,7 +364,7 @@ extern "C" void app_main() {
     power_init();  // do this first
 #endif
 #ifdef SPI_PORT
-    spi_init();    // used by the SD reader
+    spi_init();  // used by the SD reader
 #endif
     bool loaded = false;
 
@@ -384,16 +388,16 @@ extern "C" void app_main() {
         printf("Initializing WiFi connection to %s\n", wifi_ssid);
         wifi_init(wifi_ssid, wifi_pass);
     }
-    
+
     TaskHandle_t loop_handle;
     xTaskCreate(loop_task, "loop_task", 4096, nullptr, 10, &loop_handle);
     printf("Free SRAM: %0.2fKB\n", esp_get_free_internal_heap_size() / 1024.f);
 }
 static void loop() {
-    static bool is_connected=false;
+    static bool is_connected = false;
     if (!is_connected) {  // not connected yet
         if (wifi_status() == WIFI_CONNECTED) {
-            is_connected=true;
+            is_connected = true;
             puts("Connected");
             // initialize the web server
             puts("Starting httpd");
@@ -410,7 +414,7 @@ static void loop() {
         if (wifi_status() == WIFI_CONNECT_FAILED) {
             // we disconnected for some reason
             puts("Disconnected");
-            is_connected=false;
+            is_connected = false;
             httpd_end();
             wifi_retry_count = 0;
             esp_wifi_start();
