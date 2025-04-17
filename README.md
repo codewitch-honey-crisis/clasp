@@ -7,3 +7,5 @@ ClASP: The C Language ASP and static generator suite
 - ClASP-Tree combines the above into a tool that can generate a header file which declares and defines methods that can produce an entire directory tree's associated content
 
 See the README.md at each sub-project for usage
+ 
+The www_test is an example PlatformIO project written for the ESP-IDF and ESP32s to demonstrate these facilities
