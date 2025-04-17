@@ -140,6 +140,7 @@ namespace clasptree
 				output.Write("\r\n");
 				if (!nohandlers)
 				{
+					output.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {files.Count+deffia.Length}\r\n");
 					output.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
 					output.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}];\r\n");
 				}

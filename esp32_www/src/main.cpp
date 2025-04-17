@@ -249,13 +249,12 @@ static void httpd_init() {
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     }
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    static constexpr const size_t handlers_count = sizeof(httpd_response_handlers)/sizeof(httpd_response_handler_t);
-    config.max_uri_handlers = handlers_count+1;
+    config.max_uri_handlers = HTTPD_RESPONSE_HANDLER_COUNT;
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
     ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
     
-    for(size_t i = 0;i<handlers_count;++i) {
+    for(size_t i = 0;i<HTTPD_RESPONSE_HANDLER_COUNT;++i) {
         printf("Registering %s\n",httpd_response_handlers[i].path);
         httpd_uri_t handler = {.uri = httpd_response_handlers[i].path_encoded,
             .method = HTTP_GET,
