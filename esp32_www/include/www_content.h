@@ -1,4 +1,5 @@
 ﻿// Generated with clasptree
+// To use this file, define WWW_CONTENT_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.
 #ifndef WWW_CONTENT_H
 #define WWW_CONTENT_H
 #include <stddef.h>

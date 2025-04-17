@@ -113,6 +113,7 @@ namespace clasptree
 				}
 				var def = MakeSafeName(fname.ToUpperInvariant() + "_H");
 				output.Write($"// Generated with {CliUtility.AssemblyTitle}\r\n");
+				output.Write($"// To use this file, define {fname.ToUpperInvariant()}_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.\r\n");
 				output.Write($"#ifndef {def}\r\n");
 				output.Write($"#define {def}\r\n");
 				output.Write("#include <stddef.h>\r\n");
