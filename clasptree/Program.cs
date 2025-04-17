@@ -112,42 +112,39 @@ namespace clasptree
 					fname = oname;
 				}
 				var def = MakeSafeName(fname.ToUpperInvariant() + "_H");
-				output.WriteLine("// Generated with " + CliUtility.AssemblyTitle);
-				output.WriteLine($"#ifndef {def}");
-				output.WriteLine($"#define {def}");
-				output.WriteLine("#include <stddef.h>");
-				output.WriteLine();
+				output.Write($"// Generated with {CliUtility.AssemblyTitle}\r\n");
+				output.Write($"#ifndef {def}\r\n");
+				output.Write($"#define {def}\r\n");
+				output.Write("#include <stddef.h>\r\n");
+				output.Write("\r\n");
 				if (!nohandlers)
 				{
-					output.WriteLine($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;");
-					output.WriteLine($"extern {prefix}response_handler_t {prefix}handlers[{files.Count}];");
+					output.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
+					output.Write($"extern {prefix}response_handler_t {prefix}handlers[{files.Count}];\r\n");
 				}
 
 
-				output.WriteLine("#ifdef __cplusplus");
-				output.WriteLine("extern \"C\" {");
-				output.WriteLine("#endif");
-				output.WriteLine();
+				output.Write("#ifdef __cplusplus\r\n");
+				output.Write("extern \"C\" {\r\n");
+				output.Write("#endif\r\n");
+				output.Write("\r\n");
 				foreach (var f in files)
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-					output.WriteLine($"// ./{mname}");
-					output.WriteLine($"void {prefix}{fname}_{f.Key}(void* {state});");
+					output.Write($"// ./{mname}\r\n");
+					output.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
 
 				}
-				output.WriteLine();
-				output.WriteLine("#ifdef __cplusplus");
-				output.WriteLine("}");
-				output.WriteLine("#endif");
-				output.WriteLine();
-				output.WriteLine($"#endif // {def}");
-				output.WriteLine();
+				output.Write("\r\n");
+				output.Write("#ifdef __cplusplus\r\n");
+				output.Write("}\r\n");
+				output.Write("#endif\r\n\r\n");
+				output.Write($"#endif // {def}\r\n\r\n");
 				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
-				output.WriteLine($"#ifdef {impl}");
-				output.WriteLine();
+				output.Write($"#ifdef {impl}\r\n\r\n");
 				if (!nohandlers)
 				{
-					output.WriteLine($"{prefix}response_handler_t {prefix}handlers[{files.Count}] = {{");
+					output.Write($"{prefix}response_handler_t {prefix}handlers[{files.Count}] = {{\r\n");
 					int i = 0;
 					foreach (var f in files)
 					{
@@ -158,21 +155,21 @@ namespace clasptree
 						output.Write($"{clasp.Clasp.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
 						if (i < files.Count - 1)
 						{
-							output.WriteLine(" },");
+							output.Write(" },\r\n");
 						}
 						else
 						{
-							output.WriteLine(" }");
+							output.Write(" }\r\n");
 
 						}
 						++i;
 					}
-					output.WriteLine("};");
+					output.Write("};\r\n");
 				}
 				foreach (var f in files)
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-					output.WriteLine($"void {prefix}{fname}_{f.Key}(void* {state}) {{");
+					output.Write($"void {prefix}{fname}_{f.Key}(void* {state}) {{\r\n");
 					if (f.Value.Extension.ToLowerInvariant() == ".clasp")
 					{
 						clasp.Clasp.help = false;
@@ -182,7 +179,7 @@ namespace clasptree
 						clasp.Clasp.expr = expr;
 						if (!string.IsNullOrEmpty(prolStr))
 						{
-							output.WriteLine(prolStr);
+							output.Write($"{prolStr}\r\n");
 						}
 						using (clasp.Clasp.input = File.OpenText(f.Value.FullName))
 						{
@@ -190,7 +187,7 @@ namespace clasptree
 						}
 						if (!string.IsNullOrEmpty(epilStr))
 						{
-							output.WriteLine(epilStr);
+							output.Write($"{epilStr}\r\n");
 						}
 					}
 					else
@@ -206,20 +203,18 @@ namespace clasptree
 						clstat.CLStat.nostatus = false;
 						if (!string.IsNullOrEmpty(prolStr))
 						{
-							output.WriteLine(prolStr);
+							output.Write($"{prolStr}\r\n");
 						}
 						clstat.CLStat.Run();
 						if (!string.IsNullOrEmpty(epilStr))
 						{
-							output.WriteLine(epilStr);
+							output.Write($"{epilStr}\r\n");
 						}
 					}
-					output.WriteLine("}");
-					output.WriteLine();
+					output.Write("}\r\n");
 
 				}
-				output.WriteLine($"#endif // {impl}");
-				output.WriteLine();
+				output.Write($"#endif // {impl}\r\n");
 
 			}
 #if !DEBUG

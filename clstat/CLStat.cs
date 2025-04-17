@@ -80,10 +80,10 @@ namespace clstat
 					string line;
 					while (null != (line = rdr.ReadLine()))
 					{
-						output.WriteLine($"// {line}");
+						output.Write($"// {line}\r\n");
 					}
 					EmitDataFieldDecl(prologue.ToString(), stm);
-					output.WriteLine($"{block}((const char*)http_response_data,sizeof(http_response_data), {state});");
+					output.Write($"{block}((const char*)http_response_data,sizeof(http_response_data), {state});\r\n");
 					output.Flush();
 				}
 				else
@@ -376,7 +376,7 @@ namespace clstat
 			{
 				if ((i % 20) == 0)
 				{
-					output.WriteLine();
+					output.Write("\r\n");
 					if (i < (ba.Length + len) - 1)
 					{
 						output.Write("    ");
@@ -395,7 +395,7 @@ namespace clstat
 			{
 				if ((i % 20) == 0)
 				{
-					output.WriteLine();
+					output.Write("\r\n");
 					if (i < len - 1)
 					{
 						output.Write("    ");
@@ -415,7 +415,7 @@ namespace clstat
 			{
 				output.Write(" ");
 			}
-			output.WriteLine("};");
+			output.Write("};\r\n");
 		}
 		public static IEnumerable<string> ToUtf32Strings(IEnumerable<char> @string)
 		{
@@ -490,7 +490,7 @@ namespace clstat
 				var ba = Encoding.UTF8.GetBytes(text);
 				output.Write(block + "(");
 				output.Write(ToSZLiteral(ba));
-				output.WriteLine($", {ba.Length}, {state});");
+				output.Write($", {ba.Length}, {state});\r\n");
 				output.Flush();
 			}
 		}

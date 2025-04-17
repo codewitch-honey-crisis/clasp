@@ -86,7 +86,7 @@ namespace clasp
 				output.Write(ToSZLiteral(resp));
 				output.Write(", ");
 				output.Write(len);
-				output.WriteLine($", {state});");
+				output.Write($", {state});\r\n");
 				output.Flush();
 			}
 		}
@@ -94,12 +94,12 @@ namespace clasp
 		{
 			output.Write(expr + "(");
 			output.Write(resp);
-			output.WriteLine($", {state});");
+			output.Write($", {state});\r\n");
 			output.Flush();
 		}
 		public static void EmitCodeBlock(string resp)
 		{
-			output.WriteLine(resp);
+			output.Write(resp+"\r\n");
 			output.Flush();
 		}
 		public static void Emit(string text)
@@ -109,7 +109,7 @@ namespace clasp
 				var ba = Encoding.UTF8.GetBytes(text);
 				output.Write(block + "(");
 				output.Write(ToSZLiteral(ba));
-				output.WriteLine($", {ba.Length}, {state});");
+				output.Write($", {ba.Length}, {state});\r\n");
 				output.Flush();
 			}
 		}
