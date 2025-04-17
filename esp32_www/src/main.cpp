@@ -218,7 +218,6 @@ static void httpd_send_expr(float expr, void* arg) {
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     char buf[64];
     sprintf(buf,"%0.1f",expr);
-    puts(buf);
     httpd_send_chunked(resp_arg, buf, strlen(buf));
 }
 static void httpd_send_expr(const char* expr, void* arg) {

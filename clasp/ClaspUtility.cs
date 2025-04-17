@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 namespace clasp
 {
 	internal static class ClaspUtility
-	{		public static string ToSZLiteral(byte[] ba)
+	{
+		public static string ToSZLiteral(byte[] ba)
 		{
 			var sb = new StringBuilder((int)(ba.Length * 1.5));
 			sb.Append('"');
 			for (int i = 0; i < ba.Length; ++i)
 			{
-				if(i>0 && 0==(i%80) && i<ba.Length-1)
+				if (i > 0 && 0 == (i % 80) && i < ba.Length - 1)
 				{
 					sb.Append("\"\r\n    \"");
 				}
