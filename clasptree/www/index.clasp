@@ -46,7 +46,7 @@
 int r = round(example_star_rating);
 int i;
 for(i = 0;i<r;++i) {%>★<%}
-for(;i<5;++i) {%>☆<%}%></span><span> <%=example_star_rating%></span>
+for(;i<5;++i) {%>☆<%}%></span><span><%=example_star_rating%></span>
             </div>
             
             <div class="w3-center w3-padding-16">Pilot - Burn Notice</div>

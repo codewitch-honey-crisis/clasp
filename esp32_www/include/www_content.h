@@ -62,7 +62,7 @@ httpd_send_block("3\r\n\xE2\x98\x85\r\n", 8, resp_arg);
 for(;i<5;++i) {
 httpd_send_block("3\r\n\xE2\x98\x86\r\n", 8, resp_arg);
 }
-httpd_send_block("E\r\n</span><span> \r\n", 19, resp_arg);
+httpd_send_block("D\r\n</span><span>\r\n", 18, resp_arg);
 httpd_send_expr(example_star_rating, resp_arg);
 httpd_send_block("47B\r\n</span>\r\n            </div>\r\n            \r\n            <div class=\"w3-cente"
     "r w3-padding-16\">Pilot - Burn Notice</div>\r\n        </div>\r\n    </div>\r\n    <div"
