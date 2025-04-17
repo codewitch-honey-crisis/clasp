@@ -250,7 +250,8 @@ static void httpd_init() {
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     }
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 3;
+    static constexpr const size_t handlers_count = sizeof(httpd_handlers)/sizeof(httpd_response_handler_t);
+    config.max_uri_handlers = handlers_count+1;
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
     ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
@@ -260,21 +261,21 @@ static void httpd_init() {
     // void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg);
     // // ./style/w3.css
     // void httpd_www_content_style_w3_css(void* resp_arg);
+    printf("Registering %s\n","/");
     httpd_uri_t handler = {.uri = "/",
-                           .method = HTTP_GET,
-                           .handler = httpd_request_handler,
-                           .user_ctx = (void*)httpd_www_content_S01E01_Pilot_clasp};
-    ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
-    handler = {.uri = "/image/S01E01%20Pilot.jpg",
-               .method = HTTP_GET,
-               .handler = httpd_request_handler,
-               .user_ctx = (void*)httpd_www_content_image_S01E01_Pilot_jpg};
-    ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
-    handler = {.uri = "/style/w3.css",
         .method = HTTP_GET,
         .handler = httpd_request_handler,
-        .user_ctx = (void*)httpd_www_content_style_w3_css};
+        .user_ctx = (void*)httpd_handlers[0].handler};
     ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
+
+    for(size_t i = 0;i<handlers_count;++i) {
+        printf("Registering %s\n",httpd_handlers[i].path);
+        handler = {.uri = httpd_handlers[i].path_encoded,
+            .method = HTTP_GET,
+            .handler = httpd_request_handler,
+            .user_ctx = (void*)httpd_handlers[i].handler};
+        ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
+    }
 }
 static void httpd_end() {
     if (httpd_handle == nullptr) {

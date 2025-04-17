@@ -379,7 +379,7 @@ namespace clstat
 					output.WriteLine();
 					if (i < (ba.Length + len) - 1)
 					{
-						output.Write('\t');
+						output.Write("    ");
 					}
 				}
 				var entry = "0x" + ba[i].ToString("X2");
@@ -398,7 +398,7 @@ namespace clstat
 					output.WriteLine();
 					if (i < len - 1)
 					{
-						output.Write('\t');
+						output.Write("    ");
 					}
 				}
 				var entry = "0x" + sb.ToString("X2");

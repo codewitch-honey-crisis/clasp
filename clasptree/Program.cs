@@ -6,9 +6,9 @@ namespace clasptree
 
 	internal class Program
 	{
-		[CmdArg(Ordinal =0,ElementName ="input",Description ="The root directory of the site. Defaults to the current directory")]
+		[CmdArg(Ordinal = 0, ElementName = "input", Description = "The root directory of the site. Defaults to the current directory")]
 		static DirectoryInfo input = new DirectoryInfo(Environment.CurrentDirectory);
-		[CmdArg(Ordinal = 1, Optional =true, ElementName = "output", Description = "The output file to generate. Defaults to <stdout>")]
+		[CmdArg(Ordinal = 1, Optional = true, ElementName = "output", Description = "The output file to generate. Defaults to <stdout>")]
 		static TextWriter output = Console.Out;
 		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
 		static string block = "response_block";
@@ -22,19 +22,21 @@ namespace clasptree
 		static TextReader prologue = null;
 		[CmdArg(Name = "epilogue", ElementName = "epilogue", Optional = true, Description = "The file to insert into each method after any code")]
 		static TextReader epilogue = null;
+		[CmdArg(Name = "nohandlers", ElementName = "nohandlers", Optional = true, Description = "Do not generate the handlers array")]
+		static bool nohandlers = false;
 
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		static bool help = false;
 		static HashSet<string> names = new HashSet<string>();
 		static string MakeSafeName(string relpath, bool local = false)
 		{
-			if(string.IsNullOrEmpty(relpath))
+			if (string.IsNullOrEmpty(relpath))
 			{
 				return relpath;
 			}
-			
+
 			int start = 0;
-			while (start<relpath.Length && relpath[start]=='/' || relpath[start] == '\\' || relpath[start]=='.')
+			while (start < relpath.Length && relpath[start] == '/' || relpath[start] == '\\' || relpath[start] == '.')
 			{
 				++start;
 			}
@@ -42,7 +44,7 @@ namespace clasptree
 			{
 				return "";
 			}
-			var sb = new StringBuilder(relpath.Length-start);
+			var sb = new StringBuilder(relpath.Length - start);
 			for (int i = start; i < relpath.Length; i++)
 			{
 				var ch = relpath[i];
@@ -52,7 +54,7 @@ namespace clasptree
 				}
 				else
 				{
-					if (sb.Length>0 && sb[sb.Length - 1] != '_')
+					if (sb.Length > 0 && sb[sb.Length - 1] != '_')
 					{
 						sb.Append('_');
 					}
@@ -64,7 +66,7 @@ namespace clasptree
 				if (names.Contains(result))
 				{
 					int i = 2;
-					while (names.Contains(result+i.ToString()))
+					while (names.Contains(result + i.ToString()))
 					{
 						++i;
 					}
@@ -74,7 +76,7 @@ namespace clasptree
 			}
 			return result;
 		}
-		
+
 		static int Main(string[] args)
 		{
 #if !DEBUG
@@ -89,7 +91,7 @@ namespace clasptree
 					return 0;
 				}
 				if (prefix == null) prefix = "";
-				var prolStr = prologue != null ? prologue.ReadToEnd():"";
+				var prolStr = prologue != null ? prologue.ReadToEnd() : "";
 				var epilStr = epilogue != null ? epilogue.ReadToEnd() : "";
 				var fia = input.GetFiles("*.*", SearchOption.AllDirectories);
 				var files = new Dictionary<string, FileSystemInfo>();
@@ -115,6 +117,13 @@ namespace clasptree
 				output.WriteLine($"#define {def}");
 				output.WriteLine("#include <stddef.h>");
 				output.WriteLine();
+				if (!nohandlers)
+				{
+					output.WriteLine($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;");
+					output.WriteLine($"extern {prefix}response_handler_t {prefix}handlers[{files.Count}];");
+				}
+
+
 				output.WriteLine("#ifdef __cplusplus");
 				output.WriteLine("extern \"C\" {");
 				output.WriteLine("#endif");
@@ -124,7 +133,7 @@ namespace clasptree
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
 					output.WriteLine($"// ./{mname}");
 					output.WriteLine($"void {prefix}{fname}_{f.Key}(void* {state});");
-					
+
 				}
 				output.WriteLine();
 				output.WriteLine("#ifdef __cplusplus");
@@ -133,14 +142,38 @@ namespace clasptree
 				output.WriteLine();
 				output.WriteLine($"#endif // {def}");
 				output.WriteLine();
-				var impl =fname.ToUpperInvariant()+"_IMPLEMENTATION";
+				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
 				output.WriteLine($"#ifdef {impl}");
 				output.WriteLine();
+				if (!nohandlers)
+				{
+					output.WriteLine($"{prefix}response_handler_t {prefix}handlers[{files.Count}] = {{");
+					int i = 0;
+					foreach (var f in files)
+					{
+						output.Write("    { ");
+						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
+						output.Write($"{clasp.Clasp.ToSZLiteral("/"+mname)}");
+						output.Write(", ");
+						output.Write($"{clasp.Clasp.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
+						if (i < files.Count - 1)
+						{
+							output.WriteLine(" },");
+						}
+						else
+						{
+							output.WriteLine(" }");
+
+						}
+						++i;
+					}
+					output.WriteLine("};");
+				}
 				foreach (var f in files)
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
 					output.WriteLine($"void {prefix}{fname}_{f.Key}(void* {state}) {{");
-					if(f.Value.Extension.ToLowerInvariant()==".clasp")
+					if (f.Value.Extension.ToLowerInvariant() == ".clasp")
 					{
 						clasp.Clasp.help = false;
 						clasp.Clasp.output = output;
@@ -159,7 +192,8 @@ namespace clasptree
 						{
 							output.WriteLine(epilStr);
 						}
-					} else
+					}
+					else
 					{
 						clstat.CLStat.status = "OK";
 						clstat.CLStat.code = 200;
@@ -182,7 +216,7 @@ namespace clasptree
 					}
 					output.WriteLine("}");
 					output.WriteLine();
-					
+
 				}
 				output.WriteLine($"#endif // {impl}");
 				output.WriteLine();
