@@ -2,7 +2,7 @@
   "profiles": {
     "demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\www_content.h /prefix httpd_ /epilogue ..\\..\\..\\www_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr"
+      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\esp32_www\\include\\www_content.h /prefix httpd_ /epilogue ..\\..\\..\\www_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr"
     },
     "help": {
       "commandName": "Project",
