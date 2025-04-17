@@ -441,55 +441,59 @@ namespace clstat
 			}
 		}
 
-		public static string ToSZLiteral(string value)
+		public static string ToSZLiteral(byte[] ba)
 		{
-			var sb = new StringBuilder((int)(value.Length * 1.5));
+			var sb = new StringBuilder((int)(ba.Length * 1.5));
 			sb.Append('"');
-			int i = 0;
-			foreach (var cp in ToUtf32Strings(value))
+			for (int i = 0; i < ba.Length; ++i)
 			{
-				switch (cp)
+				var b = ba[i];
+				switch ((char)b)
 				{
-					case "\"":
+					case '\"':
 						sb.Append("\\\""); break;
-					case "\r":
+					case '\r':
 						sb.Append("\\r"); break;
-					case "\n":
+					case '\n':
 						sb.Append("\\n"); break;
-					case "\t":
+					case '\t':
 						sb.Append("\\t"); break;
 					default:
-						var ba = Encoding.UTF8.GetBytes(cp);
-						if (ba.Length == 1 && ba[0] < 128)
+						if (b >= ' ' && b < 128)
 						{
-							sb.Append(cp);
+							sb.Append((char)b);
 						}
 						else
 						{
-							for (int j = 0; j < ba.Length; ++j)
-							{
-								var b = ba[j];
-								sb.Append("\\x");
-								sb.Append(b.ToString("X2"));
-							}
+
+							sb.Append("\\x");
+							sb.Append(b.ToString("X2"));
+
 						}
 
 						break;
 				}
-				++i;
+
 			}
 			sb.Append('\"');
 			return sb.ToString();
+		}
+		public static string ToSZLiteral(string value)
+		{
+			var ba = Encoding.UTF8.GetBytes(value);
+			return ToSZLiteral(ba);
 		}
 		public static void EmitText(string text)
 		{
 			if (!string.IsNullOrEmpty(text))
 			{
+				var ba = Encoding.UTF8.GetBytes(text);
 				output.Write(block + "(");
-				output.Write(ToSZLiteral(text));
-				output.WriteLine($", {text.Length}, {state});");
+				output.Write(ToSZLiteral(ba));
+				output.WriteLine($", {ba.Length}, {state});");
 				output.Flush();
 			}
 		}
+		
 	}
 }
