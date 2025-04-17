@@ -255,12 +255,6 @@ static void httpd_init() {
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
     ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
-    // // ./S01E01 Pilot.clasp
-    // void httpd_www_content_S01E01_Pilot_clasp(void* resp_arg);
-    // // ./image/S01E01 Pilot.jpg
-    // void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg);
-    // // ./style/w3.css
-    // void httpd_www_content_style_w3_css(void* resp_arg);
     printf("Registering %s\n","/");
     httpd_uri_t handler = {.uri = "/",
         .method = HTTP_GET,
