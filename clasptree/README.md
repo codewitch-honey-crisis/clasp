@@ -6,25 +6,29 @@ ClASP-Tree is a C and C++ oriented HTTP response generator that takes a folder o
 
 Usage:
 ```
-clasptree 
+clasptree v0.2.0.0
+
+Generates dynamic ClASP content and static content from a directory tree
 
 Usage:
 
 clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /prefix <prefix> ]
-    [ /prologue <prologue> ] [ /epilogue <epilogue> ]
+    [ /prologue <prologue> ] [ /epilogue <epilogue> ] [ /nohandlers ] [ /index <index> ]
 
-<input>        The root directory of the site. Defaults to the current directory
-<output>       The output file to generate. Defaults to <stdout>
-<block>        The function call to send a literal block to the client. Defaults to response_block
-<expr>         The function call to send an expression to the client. Defaults to response_expr
-<state>        The variable name that holds the user state to pass to the response functions. Defaults to response_state
-<prefix>       The method prefix to use, if specified.
-<prologue>     The file to insert into each method before any code
-<epilogue>     The file to insert into each method after any code
+<input>         The root directory of the site. Defaults to the current directory
+<output>        The output file to generate. Defaults to <stdout>
+<block>         The function call to send a literal block to the client. Defaults to response_block
+<expr>          The function call to send an expression to the client. Defaults to response_expr
+<state>         The variable name that holds the user state to pass to the response functions. Defaults to response_state
+<prefix>        The method prefix to use, if specified.
+<prologue>      The file to insert into each method before any code
+<epilogue>      The file to insert into each method after any code
+/nohandlers     Do not generate the handlers array
+<index>         Generate / default handlers for files matching this wildcard. Defaults to "index.*"
 
 clasptree /?
 
-/?             Displays this screen
+/?              Displays this screen
 ```
 Consider the following
 ```

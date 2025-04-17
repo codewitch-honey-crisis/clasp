@@ -25,7 +25,7 @@ namespace clasptree
 		static TextReader epilogue = null;
 		[CmdArg(Name = "nohandlers", ElementName = "nohandlers", Optional = true, Description = "Do not generate the handlers array")]
 		static bool nohandlers = false;
-		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard")]
+		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard. Defaults to \"index.*\"")]
 		static string index = "index.*";
 
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
