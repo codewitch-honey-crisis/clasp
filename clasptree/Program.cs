@@ -150,9 +150,9 @@ namespace clasptree
 					{
 						output.Write("    { ");
 						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-						output.Write($"{clasp.Clasp.ToSZLiteral("/"+mname)}");
+						output.Write($"{clasp.ClaspUtility.ToSZLiteral("/"+mname)}");
 						output.Write(", ");
-						output.Write($"{clasp.Clasp.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
+						output.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
 						if (i < files.Count - 1)
 						{
 							output.Write(" },\r\n");

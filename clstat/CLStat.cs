@@ -417,79 +417,14 @@ namespace clstat
 			}
 			output.Write("};\r\n");
 		}
-		public static IEnumerable<string> ToUtf32Strings(IEnumerable<char> @string)
-		{
-			int chh = -1;
-			foreach (var ch in @string)
-			{
-				if (char.IsHighSurrogate(ch))
-				{
-					chh = ch;
-					continue;
-				}
-				else
-					chh = -1;
-				if (-1 != chh)
-				{
-					if (!char.IsLowSurrogate(ch))
-						throw new IOException("Unterminated Unicode surrogate pair found in string.");
-					yield return new string(new char[] { unchecked((char)chh), ch });
-					chh = -1;
-					continue;
-				}
-				yield return ch.ToString();
-			}
-		}
-
-		public static string ToSZLiteral(byte[] ba)
-		{
-			var sb = new StringBuilder((int)(ba.Length * 1.5));
-			sb.Append('"');
-			for (int i = 0; i < ba.Length; ++i)
-			{
-				var b = ba[i];
-				switch ((char)b)
-				{
-					case '\"':
-						sb.Append("\\\""); break;
-					case '\r':
-						sb.Append("\\r"); break;
-					case '\n':
-						sb.Append("\\n"); break;
-					case '\t':
-						sb.Append("\\t"); break;
-					default:
-						if (b >= ' ' && b < 128)
-						{
-							sb.Append((char)b);
-						}
-						else
-						{
-
-							sb.Append("\\x");
-							sb.Append(b.ToString("X2"));
-
-						}
-
-						break;
-				}
-
-			}
-			sb.Append('\"');
-			return sb.ToString();
-		}
-		public static string ToSZLiteral(string value)
-		{
-			var ba = Encoding.UTF8.GetBytes(value);
-			return ToSZLiteral(ba);
-		}
+		
 		public static void EmitText(string text)
 		{
 			if (!string.IsNullOrEmpty(text))
 			{
 				var ba = Encoding.UTF8.GetBytes(text);
 				output.Write(block + "(");
-				output.Write(ToSZLiteral(ba));
+				output.Write(clasp.ClaspUtility.ToSZLiteral(ba));
 				output.Write($", {ba.Length}, {state});\r\n");
 				output.Flush();
 			}

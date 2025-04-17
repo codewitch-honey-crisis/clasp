@@ -22,6 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\clasp\ClaspUtility.cs" Link="ClaspUtility.cs" />
     <Compile Include="..\clasp\CliUtility.cs" Link="CliUtility.cs" />
   </ItemGroup>
 

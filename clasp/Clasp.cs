@@ -20,70 +20,14 @@ namespace clasp
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		public static bool help = false;
 		
-		public static string ToSZLiteral(byte[] ba)
-		{
-			var sb = new StringBuilder((int)(ba.Length * 1.5));
-			sb.Append('"');
-			for(int i =0;i<ba.Length;++i) 
-			{
-				var b = ba[i];
-				switch ((char)b)
-				{
-					case '\"':
-						sb.Append("\\\""); break;
-					case '\r':
-						sb.Append("\\r"); break;
-					case '\n':
-						sb.Append("\\n"); break;
-					case '\t':
-						sb.Append("\\t"); break;
-					default:
-						if(b>=' ' && b<128)
-						{
-							sb.Append((char)b);
-						} else
-						{
-							
-							sb.Append("\\x");
-							sb.Append(b.ToString("X2"));
-							
-						}
-						
-						break;
-				}
-
-			}
-			sb.Append('\"');
-			return sb.ToString();
-		}
-		public static string ToSZLiteral(string value)
-		{
-			var ba = Encoding.UTF8.GetBytes(value);
-			return ToSZLiteral(ba);
-		}
-		public static string GenerateChunked(string resp)
-		{
-			if(resp==null)
-			{
-				return "0\r\n\r\n";
-			}
-			if(resp=="")
-			{
-				return "";
-			}
-			int len = Encoding.UTF8.GetByteCount(resp);
-			var str = len.ToString("X") + "\r\n";
-			return str + resp + "\r\n";
-
-		}
 		public static void EmitResponseBlock(string resp)
 		{
-			resp = GenerateChunked(resp);
+			resp = clasp.ClaspUtility.GenerateChunked(resp);
 			if (resp.Length > 0)
 			{
 				int len = Encoding.UTF8.GetByteCount(resp);
 				output.Write(block + "(");
-				output.Write(ToSZLiteral(resp));
+				output.Write(clasp.ClaspUtility.ToSZLiteral(resp));
 				output.Write(", ");
 				output.Write(len);
 				output.Write($", {state});\r\n");
@@ -108,7 +52,7 @@ namespace clasp
 			{
 				var ba = Encoding.UTF8.GetBytes(text);
 				output.Write(block + "(");
-				output.Write(ToSZLiteral(ba));
+				output.Write(clasp.ClaspUtility.ToSZLiteral(ba));
 				output.Write($", {ba.Length}, {state});\r\n");
 				output.Flush();
 			}
@@ -253,7 +197,7 @@ namespace clasp
 										hasTransferEncodingChunked = true;
 									}
 								}
-								Emit(headerText + "\r\n" + GenerateChunked(current.ToString()));
+								Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
 								headerText = null;
 							}
 							else
@@ -564,7 +508,7 @@ namespace clasp
 							}
 							if (!isStatic)
 							{
-								Emit(headerText + "\r\n" + GenerateChunked(current.ToString()));
+								Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
 							}
 							else
 							{

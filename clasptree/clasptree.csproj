@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <Compile Include="..\clasp\Clasp.cs" Link="Clasp.cs" />
+    <Compile Include="..\clasp\ClaspUtility.cs" Link="ClaspUtility.cs" />
     <Compile Include="..\clasp\CliUtility.cs" Link="CliUtility.cs" />
     <Compile Include="..\clstat\CLStat.cs" Link="CLStat.cs" />
   </ItemGroup>
