@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>C:\Users\gazto\source\repos\clasp\Key.snk</AssemblyOriginatorKeyFile>
+    <Title>ClASP-Tree</Title>
+    <Authors>honey the codewitch</Authors>
+    <Product>ClASP</Product>
+    <Description>Generates dynamic ClASP content and static content from a directory tree</Description>
+    <Copyright>Copyright © 2025 by honey the codewitch</Copyright>
+    <PackAsTool>True</PackAsTool>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>$(AssemblyVersion)</FileVersion>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageTags>ASP;C;C++;code generation;web;www</PackageTags>
+    <RepositoryUrl>https://github.com/codewitch-honey-crisis/clasp</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/codewitch-honey-crisis/clasp</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\clasp\Clasp.cs" Link="Clasp.cs" />
+    <Compile Include="..\clasp\CliUtility.cs" Link="CliUtility.cs" />
+    <Compile Include="..\clstat\CLStat.cs" Link="CLStat.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy &quot;$(TargetDir)$(TargetName).*&quot; &quot;$(SolutionDir)bin\&quot;&#xD;&#xA;del &quot;$(SolutionDir)bin\$(TargetName).pdb&quot;" />
+  </Target>
+
+</Project>

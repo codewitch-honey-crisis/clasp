@@ -535,6 +535,10 @@ namespace Cli
 			{
 				return new DirectoryInfo(value);
 			}
+			if(type.IsEnum)
+			{
+				return Enum.Parse(type, value,true);
+			}
 			return Convert.ChangeType(value, type);
 		}
 		static string _ValueToString(object value, Type type, TypeConverter converter)
@@ -1987,10 +1991,10 @@ namespace Cli
 							
 						}
 					}
-					else if (cmdSw.Type == CmdSwitchType.Simple)
-					{
-						_ReflSetValue(member,target, true);
-					}
+					//else if (cmdSw.Type == CmdSwitchType.Simple)
+					//{
+					//	_ReflSetValue(member,target, true);
+					//}
 					else
 					{
 						_ReflSetValue(member, target,value);

@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "image": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\404.jpg"
+    },
+    "text nocomp": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\hello.txt"
+    },
+    "help": {
+      "commandName": "Project",
+      "commandLineArgs": "/?"
+    }
+  }
+}

@@ -1,8 +1,11 @@
 ﻿using Cli;
 
+using System.IO.Compression;
 using System.Text;
-namespace clasp
+
+namespace clstat
 {
+
 	internal class Program
 	{
 		
@@ -12,10 +15,10 @@ namespace clasp
 			try
 			{
 #endif
-			using (var parsed = CliUtility.ParseAndSet(args, null, typeof(Clasp)))
-			{
-				return Clasp.Run();
-			}
+				using (var parsed = CliUtility.ParseAndSet(args, null, typeof(CLStat)))
+				{
+					CLStat.Run();
+				}
 #if !DEBUG
 			}
 			catch (Exception ex)
@@ -24,6 +27,9 @@ namespace clasp
 				return 1;
 			}
 #endif
+
+				return 0;
+			}
 		}
 	}
-}
+
