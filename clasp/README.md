@@ -51,7 +51,10 @@ Consider the following input document. It is very much like old style ASP, but t
 Executing clasp with the following command arguments: `demo.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr` will yield this output:
 
 ```cpp
-httpd_send_block("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\nE2\r\n<!DOCTYPE html>\r\n<html>\r\n    <head>\r\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n        <title>Alarm Control Panel</title>\r\n    </head>\r\n    <body>\r\n        <form method=\"get\" action=\".\">\r\n", 304, resp_arg);
+httpd_send_block("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\nE2\r\n<!DO"
+    "CTYPE html>\r\n<html>\r\n    <head>\r\n        <meta name=\"viewport\" content=\"width=de"
+    "vice-width, initial-scale=1.0\" />\r\n        <title>Alarm Control Panel</title>\r\n "
+    "   </head>\r\n    <body>\r\n        <form method=\"get\" action=\".\">\r\n", 304, resp_arg);
 for(size_t i = 0;i<alarm_count;++i) {
 
 httpd_send_block("15\r\n\r\n            <label>\r\n", 27, resp_arg);
@@ -65,7 +68,9 @@ httpd_send_block("7\r\nchecked\r\n", 12, resp_arg);
 httpd_send_block("9\r\n /><br />\r\n", 14, resp_arg);
 
 }
-httpd_send_block("A5\r\n\r\n            <input type=\"submit\" name=\"set\" value=\"set\" />\r\n            <input type=\"submit\" name=\"refresh\" value=\"get\" />\r\n        </form>\r\n    </body>\r\n</html>\r\n\r\n", 171, resp_arg);
+httpd_send_block("A5\r\n\r\n            <input type=\"submit\" name=\"set\" value=\"set\" />\r\n            <i"
+    "nput type=\"submit\" name=\"refresh\" value=\"get\" />\r\n        </form>\r\n    </body>\r\n"
+    "</html>\r\n\r\n", 171, resp_arg);
 httpd_send_block("0\r\n\r\n", 5, resp_arg);
 ```
 
