@@ -250,7 +250,7 @@ static void httpd_init() {
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     }
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    static constexpr const size_t handlers_count = sizeof(httpd_handlers)/sizeof(httpd_response_handler_t);
+    static constexpr const size_t handlers_count = sizeof(httpd_response_handlers)/sizeof(httpd_response_handler_t);
     config.max_uri_handlers = handlers_count+1;
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
@@ -259,15 +259,15 @@ static void httpd_init() {
     httpd_uri_t handler = {.uri = "/",
         .method = HTTP_GET,
         .handler = httpd_request_handler,
-        .user_ctx = (void*)httpd_handlers[0].handler};
+        .user_ctx = (void*)httpd_response_handlers[0].handler};
     ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
 
     for(size_t i = 0;i<handlers_count;++i) {
-        printf("Registering %s\n",httpd_handlers[i].path);
-        handler = {.uri = httpd_handlers[i].path_encoded,
+        printf("Registering %s\n",httpd_response_handlers[i].path);
+        handler = {.uri = httpd_response_handlers[i].path_encoded,
             .method = HTTP_GET,
             .handler = httpd_request_handler,
-            .user_ctx = (void*)httpd_handlers[i].handler};
+            .user_ctx = (void*)httpd_response_handlers[i].handler};
         ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
     }
 }

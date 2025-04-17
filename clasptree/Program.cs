@@ -120,7 +120,7 @@ namespace clasptree
 				if (!nohandlers)
 				{
 					output.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
-					output.Write($"extern {prefix}response_handler_t {prefix}handlers[{files.Count}];\r\n");
+					output.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{files.Count}];\r\n");
 				}
 
 
@@ -144,7 +144,7 @@ namespace clasptree
 				output.Write($"#ifdef {impl}\r\n\r\n");
 				if (!nohandlers)
 				{
-					output.Write($"{prefix}response_handler_t {prefix}handlers[{files.Count}] = {{\r\n");
+					output.Write($"{prefix}response_handler_t {prefix}response_handlers[{files.Count}] = {{\r\n");
 					int i = 0;
 					foreach (var f in files)
 					{

@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 typedef struct { const char* path; const char* path_encoded; void (* handler) (void* arg); } httpd_response_handler_t;
-extern httpd_response_handler_t httpd_handlers[3];
+extern httpd_response_handler_t httpd_response_handlers[3];
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,7 +24,7 @@ void httpd_www_content_style_w3_css(void* resp_arg);
 
 #ifdef WWW_CONTENT_IMPLEMENTATION
 
-httpd_response_handler_t httpd_handlers[3] = {
+httpd_response_handler_t httpd_response_handlers[3] = {
     { "/S01E01 Pilot.clasp", "/S01E01%20Pilot.clasp", httpd_www_content_S01E01_Pilot_clasp },
     { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_www_content_image_S01E01_Pilot_jpg },
     { "/style/w3.css", "/style/w3.css", httpd_www_content_style_w3_css }
