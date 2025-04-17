@@ -405,7 +405,7 @@ static void loop() {
             // initialize the web server
             puts("Starting httpd");
             httpd_init();
-            // set the QR text to our website
+            // set the url text to our website
             static char qr_text[256];
             snprintf(qr_text, sizeof(qr_text), "http://" IPSTR,
                      IP2STR(&wifi_ip));
