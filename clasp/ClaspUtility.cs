@@ -13,6 +13,10 @@ namespace clasp
 			sb.Append('"');
 			for (int i = 0; i < ba.Length; ++i)
 			{
+				if(i>0 && 0==(i%80) && i<ba.Length-1)
+				{
+					sb.Append("\"\r\n    \"");
+				}
 				var b = ba[i];
 				switch ((char)b)
 				{
