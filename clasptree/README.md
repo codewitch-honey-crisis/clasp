@@ -1,12 +1,12 @@
 # ClASP-Tree
 
-ClStat: The C Language static content generator
+ClASP-Tree: The C Language website multi-content generator
 
-ClStat is a C and C++ oriented HTTP response generator that takes input files and generates method calls to send them over a socket to a browser.
+ClASP-Tree is a C and C++ oriented HTTP response generator that takes a folder of input files and generates a header with method calls to the content over a socket to a browser.
 
 Usage:
 ```
-clasptree v1.0.0.0
+clasptree 
 
 Usage:
 
@@ -26,36 +26,11 @@ clasptree /?
 
 /?             Displays this screen
 ```
-
-First, consider the following trivial text document `hello.txt`. It simply reads `hello`: 
+Consider the following
 ```
-hello
+clasptree www esp32_www\include\www_content.h /prefix httpd_ /epilogue www_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr
 ```
-ClStat will generate this HTTP response:
+This will take all the content in a folder called www, and generate a header file called www_content.h with it.
+It specifies the prefix to use for the generated symbols, an epilogue of code to append in each method, the argument and the methods used to send data.
 
-```
-HTTP/1.1 200 OK
-Content-Type: text/plain
-Content-Length: 5
-
-hello
-```
-
-The first line is default but can be altered with `<status>` `<code>` and `/nostatus` options.
-The second line's value was detected from the file extension `.txt`
-The `Content-Length` header is always computed.
-
-Here's the actual code it generates by executing `clstat hello.txt`:
-```cpp
-response_block("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello", 69, response_state);
-```
-
-You then write a simple wrapper functions from above to send data out on a socket. 
-
-The example presented above was text, but binary content will be generated using byte arrays. 
-
-Content is compressed via the `<compress>` option which defaults to `auto`. `auto` in turn chooses whichever method yields the least size.
-
-You can specify the content-type with `<type>`
-
-Content is included in the project so you can try it.
+To understand the details of how it works see the READMEs for CLASP and ClStat_
