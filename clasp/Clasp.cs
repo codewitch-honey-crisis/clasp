@@ -19,68 +19,47 @@ namespace clasp
 		public static string state = "response_state";
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		public static bool help = false;
-		public static IEnumerable<string> ToUtf32Strings(IEnumerable<char> @string)
-		{
-			int chh = -1;
-			foreach (var ch in @string)
-			{
-				if (char.IsHighSurrogate(ch))
-				{
-					chh = ch;
-					continue;
-				}
-				else
-					chh = -1;
-				if (-1 != chh)
-				{
-					if (!char.IsLowSurrogate(ch))
-						throw new IOException("Unterminated Unicode surrogate pair found in string.");
-					yield return new string(new char[] { unchecked((char)chh), ch });
-					chh = -1;
-					continue;
-				}
-				yield return ch.ToString();
-			}
-		}
 		
-		public static string ToSZLiteral(string value)
+		public static string ToSZLiteral(byte[] ba)
 		{
-			var sb = new StringBuilder((int)(value.Length * 1.5));
+			var sb = new StringBuilder((int)(ba.Length * 1.5));
 			sb.Append('"');
-			int i = 0;
-			foreach(var cp in ToUtf32Strings(value))
+			for(int i =0;i<ba.Length;++i) 
 			{
-				switch (cp)
+				var b = ba[i];
+				switch ((char)b)
 				{
-					case "\"":
+					case '\"':
 						sb.Append("\\\""); break;
-					case "\r":
+					case '\r':
 						sb.Append("\\r"); break;
-					case "\n":
+					case '\n':
 						sb.Append("\\n"); break;
-					case "\t":
+					case '\t':
 						sb.Append("\\t"); break;
 					default:
-						var ba = Encoding.UTF8.GetBytes(cp);
-						if(ba.Length==1 && ba[0]<128)
+						if(b>=' ' && b<128)
 						{
-							sb.Append(cp);
+							sb.Append((char)b);
 						} else
 						{
-							for(int j = 0;j< ba.Length;++j)
-							{
-								var b = ba[j];
-								sb.Append("\\x");
-								sb.Append(b.ToString("X2"));
-							}
+							
+							sb.Append("\\x");
+							sb.Append(b.ToString("X2"));
+							
 						}
 						
 						break;
 				}
-				++i;
+
 			}
 			sb.Append('\"');
 			return sb.ToString();
+		}
+		public static string ToSZLiteral(string value)
+		{
+			var ba = Encoding.UTF8.GetBytes(value);
+			return ToSZLiteral(ba);
 		}
 		public static string GenerateChunked(string resp)
 		{
@@ -92,31 +71,21 @@ namespace clasp
 			{
 				return "";
 			}
-			int len = resp.Length;
+			int len = Encoding.UTF8.GetByteCount(resp);
 			var str = len.ToString("X") + "\r\n";
-			int strlen = str.Length;
 			return str + resp + "\r\n";
 
 		}
 		public static void EmitResponseBlock(string resp)
 		{
-			if (resp == null)
-			{
-				output.Write(block + "(");
-				output.Write(ToSZLiteral("0\r\n\r\n"));
-				output.WriteLine($", 5, {state});");
-				output.Flush();
-				return;
-			}
+			resp = GenerateChunked(resp);
 			if (resp.Length > 0)
 			{
 				int len = Encoding.UTF8.GetByteCount(resp);
-				var str = len.ToString("X") + "\r\n";
-				int strlen = str.Length;
 				output.Write(block + "(");
-				output.Write(ToSZLiteral(str + resp + "\r\n"));
+				output.Write(ToSZLiteral(resp));
 				output.Write(", ");
-				output.Write(len + strlen + 2);
+				output.Write(len);
 				output.WriteLine($", {state});");
 				output.Flush();
 			}
@@ -137,9 +106,10 @@ namespace clasp
 		{
 			if (!string.IsNullOrEmpty(text))
 			{
+				var ba = Encoding.UTF8.GetBytes(text);
 				output.Write(block + "(");
-				output.Write(ToSZLiteral(text));
-				output.WriteLine($", {text.Length}, {state});");
+				output.Write(ToSZLiteral(ba));
+				output.WriteLine($", {ba.Length}, {state});");
 				output.Flush();
 			}
 		}
