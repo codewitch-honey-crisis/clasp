@@ -254,11 +254,7 @@ static void httpd_init() {
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
     ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
-    printf("Registering %s\n","/");
-    httpd_uri_t handler = {.uri = "/",
-        .method = HTTP_GET,
-        .handler = httpd_request_handler,
-        .user_ctx = (void*)httpd_response_handlers[0].handler};
+    httpd_uri_t handler;
     ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
 
     for(size_t i = 0;i<handlers_count;++i) {

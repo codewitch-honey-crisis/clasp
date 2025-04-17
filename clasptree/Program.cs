@@ -1,5 +1,6 @@
 ﻿using Cli;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 namespace clasptree
 {
@@ -24,6 +25,8 @@ namespace clasptree
 		static TextReader epilogue = null;
 		[CmdArg(Name = "nohandlers", ElementName = "nohandlers", Optional = true, Description = "Do not generate the handlers array")]
 		static bool nohandlers = false;
+		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard")]
+		static string index = "index.*";
 
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		static bool help = false;
@@ -76,6 +79,18 @@ namespace clasptree
 			}
 			return result;
 		}
+		private class FIAEqComp : IEqualityComparer<FileSystemInfo>
+		{
+			public bool Equals(FileSystemInfo x, FileSystemInfo y)
+			{
+				return ReferenceEquals(x, y) || x.FullName == y.FullName;
+			}
+
+			public int GetHashCode([DisallowNull] FileSystemInfo obj)
+			{
+				return obj.FullName.GetHashCode();
+			}
+		}
 
 		static int Main(string[] args)
 		{
@@ -90,10 +105,15 @@ namespace clasptree
 					CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
 					return 0;
 				}
+				if (nohandlers && parsed.NamedArguments.ContainsKey("index")) 
+				{
+					throw new ArgumentException($"{CliUtility.SwitchPrefix}nohandlers cannot be specified with {CliUtility.SwitchPrefix}index");
+				}
 				if (prefix == null) prefix = "";
 				var prolStr = prologue != null ? prologue.ReadToEnd() : "";
 				var epilStr = epilogue != null ? epilogue.ReadToEnd() : "";
 				var fia = input.GetFiles("*.*", SearchOption.AllDirectories);
+				var deffia = input.GetFiles(index, SearchOption.AllDirectories);
 				var files = new Dictionary<string, FileSystemInfo>();
 				for (int i = 0; i < fia.Length; i++)
 				{
@@ -121,7 +141,7 @@ namespace clasptree
 				if (!nohandlers)
 				{
 					output.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
-					output.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{files.Count}];\r\n");
+					output.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}];\r\n");
 				}
 
 
@@ -145,12 +165,25 @@ namespace clasptree
 				output.Write($"#ifdef {impl}\r\n\r\n");
 				if (!nohandlers)
 				{
-					output.Write($"{prefix}response_handler_t {prefix}response_handlers[{files.Count}] = {{\r\n");
+					output.Write($"{prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}] = {{\r\n");
 					int i = 0;
 					foreach (var f in files)
 					{
-						output.Write("    { ");
 						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
+						
+						if(deffia.Contains(f.Value,new FIAEqComp())) {
+							// generate a default for this one
+							var dname = "";
+							int li = mname.LastIndexOf('/');
+							if (li> -1) {
+								dname = mname.Substring(0, li + 1);
+							}
+							output.Write("    { ");
+							output.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + dname)}");
+							output.Write(", ");
+							output.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(dname))}, {prefix}{fname}_{f.Key} }},\r\n");
+						}
+						output.Write("    { ");
 						output.Write($"{clasp.ClaspUtility.ToSZLiteral("/"+mname)}");
 						output.Write(", ");
 						output.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
