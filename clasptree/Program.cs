@@ -137,7 +137,6 @@ namespace clasptree
 				indout.Write($"// To use this file, define {fname.ToUpperInvariant()}_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.\r\n");
 				indout.Write($"#ifndef {def}\r\n");
 				indout.Write($"#define {def}\r\n");
-				indout.Write("#include <stddef.h>\r\n");
 				indout.Write("\r\n");
 				if (!nohandlers)
 				{

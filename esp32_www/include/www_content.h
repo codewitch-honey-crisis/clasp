@@ -2,7 +2,6 @@
 // To use this file, define WWW_CONTENT_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.
 #ifndef WWW_CONTENT_H
 #define WWW_CONTENT_H
-#include <stddef.h>
 
 #define HTTPD_RESPONSE_HANDLER_COUNT 4
 typedef struct { const char* path; const char* path_encoded; void (* handler) (void* arg); } httpd_response_handler_t;
