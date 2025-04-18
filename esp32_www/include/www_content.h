@@ -10,12 +10,12 @@ extern httpd_response_handler_t httpd_response_handlers[4];
 extern "C" {
 #endif
 
-    // ./index.clasp
-    void httpd_www_content_index_clasp(void* resp_arg);
-    // ./image/S01E01 Pilot.jpg
-    void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg);
-    // ./style/w3.css
-    void httpd_www_content_style_w3_css(void* resp_arg);
+// ./index.clasp
+void httpd_www_content_index_clasp(void* resp_arg);
+// ./image/S01E01 Pilot.jpg
+void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg);
+// ./style/w3.css
+void httpd_www_content_style_w3_css(void* resp_arg);
 
 #ifdef __cplusplus
 }

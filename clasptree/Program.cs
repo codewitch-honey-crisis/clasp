@@ -150,7 +150,6 @@ namespace clasptree
 				indout.Write("extern \"C\" {\r\n");
 				indout.Write("#endif\r\n");
 				indout.Write("\r\n");
-				indout.IndentLevel++;
 				foreach (var f in files)
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
@@ -158,7 +157,6 @@ namespace clasptree
 					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
 
 				}
-				indout.IndentLevel--;
 				indout.Write("\r\n");
 				indout.Write("#ifdef __cplusplus\r\n");
 				indout.Write("}\r\n");
