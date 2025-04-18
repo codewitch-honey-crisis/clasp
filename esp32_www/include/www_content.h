@@ -143,11 +143,11 @@ void httpd_www_content_index_clasp(void* resp_arg) {
     httpd_send_block("8E\r\n.jpg\" /> \r\n        </div>\r\n                 \r\n        <div class=\"w3-white w"
         "3-large\" style=\"max-width: 1200px; margin: auto\">\r\n            <p>\r\n", 148, resp_arg);
     httpd_send_expr(episode_description, resp_arg);
-    httpd_send_block("14A\r\n</p>\r\n        </div>\r\n    </div>\r\n    <script>\r\n    // Script to open and c"
-        "lose sidebar\r\n    function w3_open() {\r\n        document.getElementById(\"mySideb"
-        "ar\").style.display = \"block\";\r\n    }\r\n\r\n    function w3_close() {\r\n        docum"
-        "ent.getElementById(\"mySidebar\").style.display = \"none\";\r\n    }\r\n    </script>\r\n<"
-        "/body>\r\n</html>\r\n0\r\n\r\n", 342, resp_arg);
+    httpd_send_block("166\r\n</p>\r\n        </div>\r\n    </div>\r\n    <script>\r\n        // Script to open a"
+        "nd close sidebar\r\n        function w3_open() {\r\n            document.getElementB"
+        "yId(\"mySidebar\").style.display = \"block\";\r\n        }\r\n\r\n        function w3_clos"
+        "e() {\r\n            document.getElementById(\"mySidebar\").style.display = \"none\";\r"
+        "\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
     free(resp_arg);
 }
 void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg) {

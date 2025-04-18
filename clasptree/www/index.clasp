@@ -59,14 +59,14 @@ for(;i<5;++i) {%>☆<%}%></span><span><%=example_star_rating%></span>
         </div>
     </div>
     <script>
-    // Script to open and close sidebar
-    function w3_open() {
-        document.getElementById("mySidebar").style.display = "block";
-    }
+        // Script to open and close sidebar
+        function w3_open() {
+            document.getElementById("mySidebar").style.display = "block";
+        }
 
-    function w3_close() {
-        document.getElementById("mySidebar").style.display = "none";
-    }
+        function w3_close() {
+            document.getElementById("mySidebar").style.display = "none";
+        }
     </script>
 </body>
 </html>
