@@ -104,7 +104,7 @@ void httpd_www_content_index_clasp(void* resp_arg) {
         "=\"mySidebar\">\r\n        <a href=\"https://github.com/codewitch-honey-crisis/clasp\""
         " onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">ClASP at GitHub</a>\r\n       "
         " <a href=\"/\" onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">\r\n", 1026, resp_arg);
-    httpd_send_expr(show_title, resp_arg);
+    httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("13C\r\n</a>\r\n    </nav>\r\n    <div class=\"w3-top\">\r\n        <div class=\"w3-white w3"
         "-xlarge\" style=\"max-width: 1200px; margin: auto\">\r\n            <div class=\"w3-bu"
         "tton w3-padding-16 w3-left\" onclick=\"w3_open()\">\xE2\x98\xB0</div>\r\n            \r\n       "
@@ -125,7 +125,7 @@ void httpd_www_content_index_clasp(void* resp_arg) {
         " w3-padding-16\">\r\n", 98, resp_arg);
     httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("3\r\n - \r\n", 8, resp_arg);
-    httpd_send_expr(episode_title, resp_arg);
+    httpd_send_expr(show_title, resp_arg);
     httpd_send_block("9B\r\n</div>\r\n        </div>\r\n    </div>\r\n    <div class=\"w3-main w3-content w3-pa"
         "dding\" style=\"max-width: 1200px; margin-top: 100px\">\r\n\r\n        \r\n        <div>\r\n", 161, resp_arg);
     char tmp[256]={0};

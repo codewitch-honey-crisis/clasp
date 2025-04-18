@@ -4,7 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 namespace clasptree
 {
-
+	enum HandlersMode
+	{
+		none,
+		@default,
+		extended
+	}
 	internal class Program
 	{
 		[CmdArg(Ordinal = 0, ElementName = "input", Description = "The root directory of the site. Defaults to the current directory")]
@@ -23,8 +28,8 @@ namespace clasptree
 		static TextReader prologue = null;
 		[CmdArg(Name = "epilogue", ElementName = "epilogue", Optional = true, Description = "The file to insert into each method after any code")]
 		static TextReader epilogue = null;
-		[CmdArg(Name = "nohandlers", ElementName = "nohandlers", Optional = true, Description = "Do not generate the handlers array")]
-		static bool nohandlers = false;
+		[CmdArg(Name = "handlers", ElementName = "handlers", Optional = true, Description = "Indicated wither to generate no handler entries (none), default entries (@default) or extended (extended) handlers. None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based on <index>. Extended does this and also adds path/ trailing handlers")]
+		static HandlersMode handlers = HandlersMode.@default;
 		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard. Defaults to \"index.*\"")]
 		static string index = "index.*";
 
@@ -105,9 +110,9 @@ namespace clasptree
 					CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
 					return 0;
 				}
-				if (nohandlers && parsed.NamedArguments.ContainsKey("index")) 
+				if (handlers==HandlersMode.none && parsed.NamedArguments.ContainsKey("index")) 
 				{
-					throw new ArgumentException($"{CliUtility.SwitchPrefix}nohandlers cannot be specified with {CliUtility.SwitchPrefix}index");
+					throw new ArgumentException($"{CliUtility.SwitchPrefix}<handlers> \"none\" cannot be specified with {CliUtility.SwitchPrefix}index");
 				}
 				if (prefix == null) prefix = "";
 				var prolStr = prologue != null ? prologue.ReadToEnd() : "";
@@ -118,7 +123,7 @@ namespace clasptree
 				for (int i = 0; i < fia.Length; i++)
 				{
 					var fi = fia[i];
-					var mname = fi.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
+					var mname = fi.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); 
 					var sn = MakeSafeName(mname);
 					if (!string.IsNullOrEmpty(sn))
 					{
@@ -138,11 +143,28 @@ namespace clasptree
 				indout.Write($"#ifndef {def}\r\n");
 				indout.Write($"#define {def}\r\n");
 				indout.Write("\r\n");
-				if (!nohandlers)
+				int handlersCount = (handlers != HandlersMode.none) ? files.Count + deffia.Length : 0;
+				if (handlers == HandlersMode.extended)
 				{
-					indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {files.Count+deffia.Length}\r\n");
+					foreach (var f in files)
+					{
+						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
+
+						if (deffia.Contains(f.Value, new FIAEqComp()))
+						{
+							int li = mname.LastIndexOf('/');
+							if (li > -1 && li != mname.Length - 1)
+							{
+								handlersCount++;
+							}
+						}
+					}
+				}
+				if (handlers!=HandlersMode.none)
+				{
+					indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {handlersCount}\r\n");
 					indout.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
-					indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}];\r\n");
+					indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{handlersCount}];\r\n");
 				}
 
 
@@ -164,9 +186,10 @@ namespace clasptree
 				indout.Write($"#endif // {def}\r\n\r\n");
 				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
 				indout.Write($"#ifdef {impl}\r\n\r\n");
-				if (!nohandlers)
+				
+				if (handlers!=HandlersMode.none)
 				{
-					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}] = {{\r\n");
+					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{handlersCount}] = {{\r\n");
 					int i = 0;
 					foreach (var f in files)
 					{
@@ -178,6 +201,17 @@ namespace clasptree
 							int li = mname.LastIndexOf('/');
 							if (li> -1) {
 								dname = mname.Substring(0, li + 1);
+							}
+							if(dname.Length>1)
+							{
+								if(handlers==HandlersMode.extended)
+								{
+									indout.Write("    { ");
+									indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + dname)}");
+									indout.Write(", ");
+									indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(dname))}, {prefix}{fname}_{f.Key} }},\r\n");
+								}
+								dname=dname.Substring(0,dname.Length-1);
 							}
 							indout.Write("    { ");
 							indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + dname)}");
