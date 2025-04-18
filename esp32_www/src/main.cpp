@@ -188,7 +188,6 @@ static void httpd_parse_url(const char* url) {
 static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
                                const char* buffer, size_t buffer_len) {
     char buf[64];
-    puts(buffer);
     httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     if (buffer && buffer_len) {

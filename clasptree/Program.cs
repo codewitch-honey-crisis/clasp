@@ -132,41 +132,44 @@ namespace clasptree
 					fname = oname;
 				}
 				var def = MakeSafeName(fname.ToUpperInvariant() + "_H");
-				output.Write($"// Generated with {CliUtility.AssemblyTitle}\r\n");
-				output.Write($"// To use this file, define {fname.ToUpperInvariant()}_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.\r\n");
-				output.Write($"#ifndef {def}\r\n");
-				output.Write($"#define {def}\r\n");
-				output.Write("#include <stddef.h>\r\n");
-				output.Write("\r\n");
+				var indout = new IndentedTextWriter(output);
+				indout.Write($"// Generated with {CliUtility.AssemblyTitle}\r\n");
+				indout.Write($"// To use this file, define {fname.ToUpperInvariant()}_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.\r\n");
+				indout.Write($"#ifndef {def}\r\n");
+				indout.Write($"#define {def}\r\n");
+				indout.Write("#include <stddef.h>\r\n");
+				indout.Write("\r\n");
 				if (!nohandlers)
 				{
-					output.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {files.Count+deffia.Length}\r\n");
-					output.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
-					output.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}];\r\n");
+					indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {files.Count+deffia.Length}\r\n");
+					indout.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
+					indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}];\r\n");
 				}
 
 
-				output.Write("#ifdef __cplusplus\r\n");
-				output.Write("extern \"C\" {\r\n");
-				output.Write("#endif\r\n");
-				output.Write("\r\n");
+				indout.Write("#ifdef __cplusplus\r\n");
+				indout.Write("extern \"C\" {\r\n");
+				indout.Write("#endif\r\n");
+				indout.Write("\r\n");
+				indout.IndentLevel++;
 				foreach (var f in files)
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-					output.Write($"// ./{mname}\r\n");
-					output.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
+					indout.Write($"// ./{mname}\r\n");
+					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
 
 				}
-				output.Write("\r\n");
-				output.Write("#ifdef __cplusplus\r\n");
-				output.Write("}\r\n");
-				output.Write("#endif\r\n\r\n");
-				output.Write($"#endif // {def}\r\n\r\n");
+				indout.IndentLevel--;
+				indout.Write("\r\n");
+				indout.Write("#ifdef __cplusplus\r\n");
+				indout.Write("}\r\n");
+				indout.Write("#endif\r\n\r\n");
+				indout.Write($"#endif // {def}\r\n\r\n");
 				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
-				output.Write($"#ifdef {impl}\r\n\r\n");
+				indout.Write($"#ifdef {impl}\r\n\r\n");
 				if (!nohandlers)
 				{
-					output.Write($"{prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}] = {{\r\n");
+					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{files.Count+deffia.Length}] = {{\r\n");
 					int i = 0;
 					foreach (var f in files)
 					{
@@ -179,42 +182,43 @@ namespace clasptree
 							if (li> -1) {
 								dname = mname.Substring(0, li + 1);
 							}
-							output.Write("    { ");
-							output.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + dname)}");
-							output.Write(", ");
-							output.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(dname))}, {prefix}{fname}_{f.Key} }},\r\n");
+							indout.Write("    { ");
+							indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + dname)}");
+							indout.Write(", ");
+							indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(dname))}, {prefix}{fname}_{f.Key} }},\r\n");
 						}
-						output.Write("    { ");
-						output.Write($"{clasp.ClaspUtility.ToSZLiteral("/"+mname)}");
-						output.Write(", ");
-						output.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
+						indout.Write("    { ");
+						indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/"+mname)}");
+						indout.Write(", ");
+						indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
 						if (i < files.Count - 1)
 						{
-							output.Write(" },\r\n");
+							indout.Write(" },\r\n");
 						}
 						else
 						{
-							output.Write(" }\r\n");
+							indout.Write(" }\r\n");
 
 						}
 						++i;
 					}
-					output.Write("};\r\n");
+					indout.Write("};\r\n");
 				}
 				foreach (var f in files)
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-					output.Write($"void {prefix}{fname}_{f.Key}(void* {state}) {{\r\n");
+					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state}) {{\r\n");
 					if (f.Value.Extension.ToLowerInvariant() == ".clasp")
 					{
+						indout.IndentLevel++;
 						clasp.Clasp.help = false;
-						clasp.Clasp.output = output;
+						clasp.Clasp.output = indout;
 						clasp.Clasp.state = state;
 						clasp.Clasp.block = block;
 						clasp.Clasp.expr = expr;
 						if (!string.IsNullOrEmpty(prolStr))
 						{
-							output.Write($"{prolStr}\r\n");
+							indout.Write($"{prolStr}\r\n");
 						}
 						using (clasp.Clasp.input = File.OpenText(f.Value.FullName))
 						{
@@ -222,11 +226,13 @@ namespace clasptree
 						}
 						if (!string.IsNullOrEmpty(epilStr))
 						{
-							output.Write($"{epilStr}\r\n");
+							indout.Write($"{epilStr}\r\n");
 						}
+						indout.IndentLevel--;
 					}
 					else
 					{
+						indout.IndentLevel++;
 						clstat.CLStat.status = "OK";
 						clstat.CLStat.code = 200;
 						clstat.CLStat.compress = clstat.CompressionType.auto;
@@ -234,22 +240,24 @@ namespace clasptree
 						clstat.CLStat.block = block;
 						clstat.CLStat.state = state;
 						clstat.CLStat.input = (FileInfo)f.Value;
-						clstat.CLStat.output = output;
+						clstat.CLStat.output = indout;
 						clstat.CLStat.nostatus = false;
 						if (!string.IsNullOrEmpty(prolStr))
 						{
-							output.Write($"{prolStr}\r\n");
+							indout.Write($"{prolStr}\r\n");
 						}
 						clstat.CLStat.Run();
 						if (!string.IsNullOrEmpty(epilStr))
 						{
-							output.Write($"{epilStr}\r\n");
+							indout.Write($"{epilStr}\r\n");
 						}
+						indout.IndentLevel--;
 					}
-					output.Write("}\r\n");
+					indout.Write("}\r\n");
 
 				}
-				output.Write($"#endif // {impl}\r\n");
+				indout.Write($"#endif // {impl}\r\n");
+				indout.Flush();
 
 			}
 #if !DEBUG

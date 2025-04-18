@@ -353,6 +353,11 @@ namespace Cli
 				EnsureWriter();
 				_writer.Write(value);
 			}
+			public override void Write(char ch)
+			{
+				EnsureWriter();
+				_writer.Write(ch);
+			}
 			public override void WriteLine(string value)
 			{
 				EnsureWriter();
