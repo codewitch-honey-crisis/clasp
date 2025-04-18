@@ -13,6 +13,7 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
+#include <ctype.h>
 #ifdef M5STACK_CORE2
 #include <esp_i2c.hpp>        // i2c initialization
 #include <m5core2_power.hpp>  // AXP192 power management (core2)
@@ -28,11 +29,19 @@
 // these are globals we use in the page
 
 static const float example_star_rating = 3.8;
-
+static const char* episode_title = "Pilot";
+static const char* show_title = "Burn Notice";
+static const unsigned char episode_number = 1;
+static const unsigned char season_number = 1;
+static const char* episode_description = "While on assignment, agent Michael Westen gets a \"Burn Notice\" and becomes untouchable. Having no idea what or who triggered his demise, Michael returns to his hometown, Miami, determined to find out the reason for his sudden termination.";
 static void httpd_send_block(const char* data, size_t len, void* arg);
 static void httpd_send_expr(int expr, void* arg);
+static void httpd_send_expr(unsigned char expr, void* arg);
 static void httpd_send_expr(float expr, void* arg);
 static void httpd_send_expr(const char* expr, void* arg);
+static char enc_rfc3986[256] = {0};
+static char enc_html5[256] = {0};
+static char *httpd_url_encode(char *enc, size_t size, const char *s, const char *table);
 
 #define WWW_CONTENT_IMPLEMENTATION
 #include "www_content.h"
@@ -140,6 +149,24 @@ struct httpd_async_resp_arg {
     httpd_handle_t hd;
     int fd;
 };
+static char *httpd_url_encode(char *enc, size_t size, const char *s, const char *table){
+    char* result = enc;
+    if(table==NULL) table = enc_rfc3986;
+    for (; *s; s++){
+        if (table[*s]) { 
+            *enc++ = table[*s];
+            --size;
+        }
+        else {
+            snprintf( enc,size, "%%%02X", *s);
+            while (*++enc) {
+                --size;
+            }
+        }
+        
+    }
+    return result;
+}
 static const char* httpd_crack_query(const char* url_part, char* name,
                                      char* value) {
     if (url_part == nullptr || !*url_part) return nullptr;
@@ -220,6 +247,12 @@ static void httpd_send_expr(float expr, void* arg) {
     sprintf(buf, "%0.1f", expr);
     httpd_send_chunked(resp_arg, buf, strlen(buf));
 }
+static void httpd_send_expr(unsigned char expr, void* arg) {
+    httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
+    char buf[64];
+    sprintf(buf, "%02d", (int)expr);
+    httpd_send_chunked(resp_arg, buf, strlen(buf));
+}
 static void httpd_send_expr(const char* expr, void* arg) {
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     if (!expr || !*expr) {
@@ -246,6 +279,11 @@ static void httpd_init() {
     httpd_ui_sync = xSemaphoreCreateMutex();
     if (httpd_ui_sync == nullptr) {
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
+    for (int i = 0; i < 256; i++){
+
+        enc_rfc3986[i] = isalnum( i) || i == '~' || i == '-' || i == '.' || i == '_' ? i : 0;
+        enc_html5[i] = isalnum( i) || i == '*' || i == '-' || i == '.' || i == '_' ? i : (i == ' ') ? '+' : 0;
     }
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_uri_handlers = HTTPD_RESPONSE_HANDLER_COUNT;

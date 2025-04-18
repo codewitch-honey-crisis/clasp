@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="./style/w3.css">
-    <title>Pilot - Burn Notice</title>
+    <title><%=episode_title%> - <%=show_title%></title>
     <style>
         .w3-bar-block .w3-bar-item {
             padding: 20px
@@ -49,14 +49,14 @@ for(i = 0;i<r;++i) {%>★<%}
 for(;i<5;++i) {%>☆<%}%></span><span><%=example_star_rating%></span>
             </div>
             
-            <div class="w3-center w3-padding-16">Pilot - Burn Notice</div>
+            <div class="w3-center w3-padding-16"><%=episode_title%> - <%=show_title%></div>
         </div>
     </div>
     <div class="w3-main w3-content w3-padding" style="max-width: 1200px; margin-top: 100px">
 
         
-        <div>
-        <img alt="S01E01 Pilot (unavailable)" style="width:100%;" src="./image/S01E01%20Pilot.jpg" /> 
+        <div><%char tmp[256]={0};%>
+        <img alt="S<%=season_number%>E<%=episode_number%> <%=episode_title%>" style="width:100%;" src="./image/S<%=season_number%>E<%=episode_number%>%20<%=httpd_url_encode(tmp,sizeof(tmp),episode_title,nullptr)%>.jpg" /> 
         </div>
         
         <div><center><h3 style="color: red;">Not available</h3></center></div>
@@ -64,7 +64,7 @@ for(;i<5;++i) {%>☆<%}%></span><span><%=example_star_rating%></span>
 
          
  <div class="w3-white w3-large" style="max-width: 1200px; margin: auto">
-     <p>While on assignment, agent Michael Westen gets a "Burn Notice" and becomes untouchable. Having no idea what or who triggered his demise, Michael returns to his hometown, Miami, determined to find out the reason for his sudden termination.</p>
+     <p><%=episode_description%></p>
  </div>
  
     </div>
