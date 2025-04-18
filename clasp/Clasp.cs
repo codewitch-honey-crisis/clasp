@@ -25,11 +25,11 @@ namespace clasp
 			resp = clasp.ClaspUtility.GenerateChunked(resp);
 			if (resp.Length > 0)
 			{
-				int len = Encoding.UTF8.GetByteCount(resp);
+				var ba = Encoding.UTF8.GetBytes(resp);
 				output.Write(block + "(");
-				output.Write(clasp.ClaspUtility.ToSZLiteral(resp));
+				output.Write(clasp.ClaspUtility.ToSZLiteral(ba));
 				output.Write(", ");
-				output.Write(len);
+				output.Write(ba.Length);
 				output.Write($", {state});\r\n");
 				output.Flush();
 			}
