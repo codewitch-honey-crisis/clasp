@@ -8,7 +8,7 @@ namespace clasp
 	internal class Clasp
 	{
 		[CmdArg(Ordinal = 0, Optional = false)]
-		public static TextReader input;
+		public static TextReader input = null;
 		[CmdArg(Ordinal = 1, Optional = true)]
 		public static TextWriter output = Console.Out;
 		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
