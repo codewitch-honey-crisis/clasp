@@ -105,11 +105,10 @@ void httpd_www_content_index_clasp(void* resp_arg) {
         " onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">ClASP at GitHub</a>\r\n       "
         " <a href=\"/\" onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">\r\n", 1026, resp_arg);
     httpd_send_expr(episode_title, resp_arg);
-    httpd_send_block("13C\r\n</a>\r\n    </nav>\r\n    <div class=\"w3-top\">\r\n        <div class=\"w3-white w3"
+    httpd_send_block("12C\r\n</a>\r\n    </nav>\r\n    <div class=\"w3-top\">\r\n        <div class=\"w3-white w3"
         "-xlarge\" style=\"max-width: 1200px; margin: auto\">\r\n            <div class=\"w3-bu"
-        "tton w3-padding-16 w3-left\" onclick=\"w3_open()\">\xE2\x98\xB0</div>\r\n            \r\n       "
-        "     <div class=\"w3-right w3-padding-16\">\r\n\r\n                <span class=\"stars\""
-        ">\r\n", 323, resp_arg);
+        "tton w3-padding-16 w3-left\" onclick=\"w3_open()\">\xE2\x98\xB0</div>\r\n            <div clas"
+        "s=\"w3-right w3-padding-16\">\r\n                <span class=\"stars\">\r\n", 307, resp_arg);
     
     int r = round(example_star_rating);
     int i;
@@ -121,15 +120,15 @@ void httpd_www_content_index_clasp(void* resp_arg) {
     }
     httpd_send_block("D\r\n</span><span>\r\n", 18, resp_arg);
     httpd_send_expr(example_star_rating, resp_arg);
-    httpd_send_block("5C\r\n</span>\r\n            </div>\r\n            \r\n            <div class=\"w3-center"
-        " w3-padding-16\">\r\n", 98, resp_arg);
+    httpd_send_block("4E\r\n</span>\r\n            </div>\r\n            <div class=\"w3-center w3-padding-16"
+        "\">\r\n", 84, resp_arg);
     httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("3\r\n - \r\n", 8, resp_arg);
     httpd_send_expr(show_title, resp_arg);
-    httpd_send_block("9B\r\n</div>\r\n        </div>\r\n    </div>\r\n    <div class=\"w3-main w3-content w3-pa"
-        "dding\" style=\"max-width: 1200px; margin-top: 100px\">\r\n\r\n        \r\n        <div>\r\n", 161, resp_arg);
+    httpd_send_block("8F\r\n</div>\r\n        </div>\r\n    </div>\r\n    <div class=\"w3-main w3-content w3-pa"
+        "dding\" style=\"max-width: 1200px; margin-top: 100px\">\r\n        <div>\r\n", 149, resp_arg);
     char tmp[256]={0};
-    httpd_send_block("15\r\n\r\n        <img alt=\"S\r\n", 27, resp_arg);
+    httpd_send_block("19\r\n\r\n            <img alt=\"S\r\n", 31, resp_arg);
     httpd_send_expr(season_number, resp_arg);
     httpd_send_block("1\r\nE\r\n", 6, resp_arg);
     httpd_send_expr(episode_number, resp_arg);
@@ -141,14 +140,14 @@ void httpd_www_content_index_clasp(void* resp_arg) {
     httpd_send_expr(episode_number, resp_arg);
     httpd_send_block("3\r\n%20\r\n", 8, resp_arg);
     httpd_send_expr(httpd_url_encode(tmp,sizeof(tmp),episode_title,nullptr), resp_arg);
-    httpd_send_block("80\r\n.jpg\" /> \r\n        </div>\r\n                 \r\n <div class=\"w3-white w3-large"
-        "\" style=\"max-width: 1200px; margin: auto\">\r\n     <p>\r\n", 134, resp_arg);
+    httpd_send_block("8E\r\n.jpg\" /> \r\n        </div>\r\n                 \r\n        <div class=\"w3-white w"
+        "3-large\" style=\"max-width: 1200px; margin: auto\">\r\n            <p>\r\n", 148, resp_arg);
     httpd_send_expr(episode_description, resp_arg);
-    httpd_send_block("146\r\n</p>\r\n </div>\r\n \r\n    </div>\r\n    <script>\r\n    // Script to open and close"
-        " sidebar\r\n    function w3_open() {\r\n        document.getElementById(\"mySidebar\")"
-        ".style.display = \"block\";\r\n    }\r\n\r\n    function w3_close() {\r\n        document."
-        "getElementById(\"mySidebar\").style.display = \"none\";\r\n    }\r\n    </script>\r\n</bod"
-        "y>\r\n</html>\r\n0\r\n\r\n", 338, resp_arg);
+    httpd_send_block("14A\r\n</p>\r\n        </div>\r\n    </div>\r\n    <script>\r\n    // Script to open and c"
+        "lose sidebar\r\n    function w3_open() {\r\n        document.getElementById(\"mySideb"
+        "ar\").style.display = \"block\";\r\n    }\r\n\r\n    function w3_close() {\r\n        docum"
+        "ent.getElementById(\"mySidebar\").style.display = \"none\";\r\n    }\r\n    </script>\r\n<"
+        "/body>\r\n</html>\r\n0\r\n\r\n", 342, resp_arg);
     free(resp_arg);
 }
 void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg) {
