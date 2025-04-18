@@ -78,8 +78,7 @@ void httpd_www_content_index_clasp(void* resp_arg) {
         "ipt to open and close sidebar\r\n    function w3_open() {\r\n        document.getEle"
         "mentById(\"mySidebar\").style.display = \"block\";\r\n    }\r\n\r\n    function w3_close()"
         " {\r\n        document.getElementById(\"mySidebar\").style.display = \"none\";\r\n    }\r"
-        "\n    </script>\r\n</body>\r\n</html>\r\n", 1154, resp_arg);
-    httpd_send_block("0\r\n\r\n", 5, resp_arg);
+        "\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 1159, resp_arg);
     free(resp_arg);
 }
 void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg) {

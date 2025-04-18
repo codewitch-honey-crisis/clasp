@@ -483,6 +483,7 @@ namespace clasp
 
 				i = inputBuffer.Read();
 			}
+			var emittedTerminator = false;
 			switch (s)
 			{
 				case 0:
@@ -520,7 +521,8 @@ namespace clasp
 						{
 							if (!isStatic)
 							{
-								EmitResponseBlock(current.ToString());
+								Emit(clasp.ClaspUtility.GenerateChunked(current.ToString())+clasp.ClaspUtility.GenerateChunked(null));
+								emittedTerminator = true;
 							}
 							else
 							{
@@ -553,7 +555,8 @@ namespace clasp
 					}
 					else
 					{
-						EmitResponseBlock(current.ToString());
+						Emit(clasp.ClaspUtility.GenerateChunked(current.ToString()) + clasp.ClaspUtility.GenerateChunked(null));
+						emittedTerminator = true;
 					}
 					break;
 				case 3:
@@ -631,7 +634,7 @@ namespace clasp
 				default:
 					throw new Exception($"Invalid syntax in page on line {line}");
 			}
-			if (hasTransferEncodingChunked)
+			if (hasTransferEncodingChunked && !emittedTerminator)
 			{
 				EmitResponseBlock(null);
 			}
