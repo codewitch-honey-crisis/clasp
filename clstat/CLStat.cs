@@ -167,7 +167,7 @@ namespace clstat
 						type = "image/gif";
 						break;
 					case ".ico":
-						type = "image/vnd.microsoft.icon";
+						type = "image/x-icon";
 						break;
 					case ".jar":
 						type = "application/java-archive";
