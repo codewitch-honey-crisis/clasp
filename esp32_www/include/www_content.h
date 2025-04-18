@@ -91,7 +91,7 @@ void httpd_www_content_index_clasp(void* resp_arg) {
     httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("3\r\n - \r\n", 8, resp_arg);
     httpd_send_expr(show_title, resp_arg);
-    httpd_send_block("53C\r\n</title>\r\n    <style>\r\n        .w3-bar-block .w3-bar-item {\r\n            pa"
+    httpd_send_block("3FB\r\n</title>\r\n    <style>\r\n        .w3-bar-block .w3-bar-item {\r\n            pa"
         "dding: 20px\r\n        }\r\n\r\n        body {\r\n            font-family: 'Segoe UI', T"
         "ahoma, Geneva, Verdana, sans-serif;\r\n        }\r\n\r\n        h3 {\r\n            font"
         "-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Uni"
@@ -103,11 +103,13 @@ void httpd_www_content_index_clasp(void* resp_arg) {
         "animate-left\" style=\"display: none; z-index: 2; width: 40%; min-width: 300px\" id"
         "=\"mySidebar\">\r\n        <a href=\"https://github.com/codewitch-honey-crisis/clasp\""
         " onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">ClASP at GitHub</a>\r\n       "
-        " <a href=\"/\" onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">Pilot</a>\r\n    <"
-        "/nav>\r\n    <div class=\"w3-top\">\r\n        <div class=\"w3-white w3-xlarge\" style=\""
-        "max-width: 1200px; margin: auto\">\r\n            <div class=\"w3-button w3-padding-"
-        "16 w3-left\" onclick=\"w3_open()\">\xE2\x98\xB0</div>\r\n            \r\n            <div class="
-        "\"w3-right w3-padding-16\">\r\n\r\n                <span class=\"stars\">\r\n", 1347, resp_arg);
+        " <a href=\"/\" onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">\r\n", 1026, resp_arg);
+    httpd_send_expr(show_title, resp_arg);
+    httpd_send_block("13C\r\n</a>\r\n    </nav>\r\n    <div class=\"w3-top\">\r\n        <div class=\"w3-white w3"
+        "-xlarge\" style=\"max-width: 1200px; margin: auto\">\r\n            <div class=\"w3-bu"
+        "tton w3-padding-16 w3-left\" onclick=\"w3_open()\">\xE2\x98\xB0</div>\r\n            \r\n       "
+        "     <div class=\"w3-right w3-padding-16\">\r\n\r\n                <span class=\"stars\""
+        ">\r\n", 323, resp_arg);
     
     int r = round(example_star_rating);
     int i;
@@ -123,7 +125,7 @@ void httpd_www_content_index_clasp(void* resp_arg) {
         " w3-padding-16\">\r\n", 98, resp_arg);
     httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("3\r\n - \r\n", 8, resp_arg);
-    httpd_send_expr(show_title, resp_arg);
+    httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("9B\r\n</div>\r\n        </div>\r\n    </div>\r\n    <div class=\"w3-main w3-content w3-pa"
         "dding\" style=\"max-width: 1200px; margin-top: 100px\">\r\n\r\n        \r\n        <div>\r\n", 161, resp_arg);
     char tmp[256]={0};
@@ -139,9 +141,8 @@ void httpd_www_content_index_clasp(void* resp_arg) {
     httpd_send_expr(episode_number, resp_arg);
     httpd_send_block("3\r\n%20\r\n", 8, resp_arg);
     httpd_send_expr(httpd_url_encode(tmp,sizeof(tmp),episode_title,nullptr), resp_arg);
-    httpd_send_block("DE\r\n.jpg\" /> \r\n        </div>\r\n        \r\n        <div><center><h3 style=\"color: "
-        "red;\">Not available</h3></center></div>\r\n        \r\n\r\n         \r\n <div class=\"w3-"
-        "white w3-large\" style=\"max-width: 1200px; margin: auto\">\r\n     <p>\r\n", 228, resp_arg);
+    httpd_send_block("80\r\n.jpg\" /> \r\n        </div>\r\n                 \r\n <div class=\"w3-white w3-large"
+        "\" style=\"max-width: 1200px; margin: auto\">\r\n     <p>\r\n", 134, resp_arg);
     httpd_send_expr(episode_description, resp_arg);
     httpd_send_block("146\r\n</p>\r\n </div>\r\n \r\n    </div>\r\n    <script>\r\n    // Script to open and close"
         " sidebar\r\n    function w3_open() {\r\n        document.getElementById(\"mySidebar\")"
