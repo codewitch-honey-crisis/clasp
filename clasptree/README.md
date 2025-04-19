@@ -40,7 +40,12 @@ clasptree www esp32_www\include\httpd_content.h /prefix httpd_ /epilogue www_epi
 This will take all the content in a folder called www, and generate a header file called httpd_content.h with it.
 It specifies the prefix to use for the generated symbols, an epilogue of code to append in each method, the argument and the methods used to send data.
 
-To understand the details of how it works see the READMEs for CLASP and ClStat_
+To understand the details of how it works see the READMEs for CLASP and ClStat, but essentially it does the following:
+
+- For .clasp files, they are interpreted as dynamic content and generated accordingly.
+- For .h files, they are copied into the input directory in a mirrored tree, and an `#include` is added in the generated code.
+- For other files, it is potentially compressed and embedded as static.
+
 
 In the Visual Studio demo for clasptree, this command from above generates this content based on the contents of www:
 
