@@ -235,3 +235,46 @@ Here's the example in the demo:
 This will usually be in your web server's main implementation code.
 
 You can now access and register the handlers' paths and associated handler methods.
+
+Here's an example of using the generated handlers array to initialize the web server (ESP-IDF/ESP32)
+
+```cpp
+static httpd_handle_t httpd_handle = nullptr;
+struct httpd_async_resp_arg {
+    httpd_handle_t hd;
+    int fd;
+};
+static esp_err_t httpd_request_handler(httpd_req_t* req) {
+    httpd_async_resp_arg* resp_arg =
+        (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
+    if (resp_arg == nullptr) {
+        return ESP_ERR_NO_MEM;
+    }
+    httpd_parse_url(req->uri);
+    resp_arg->hd = req->handle;
+    resp_arg->fd = httpd_req_to_sockfd(req);
+    if (resp_arg->fd < 0) {
+        return ESP_FAIL;
+    }
+    httpd_queue_work(req->handle, (httpd_work_fn_t)req->user_ctx, resp_arg);
+    return ESP_OK;
+}
+static void httpd_init() {
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.max_uri_handlers = HTTPD_RESPONSE_HANDLER_COUNT;
+    config.server_port = 80;
+    config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
+    ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
+
+    for (size_t i = 0; i < HTTPD_RESPONSE_HANDLER_COUNT; ++i) {
+        printf("Registering %s\n", httpd_response_handlers[i].path);
+        httpd_uri_t handler = {
+            .uri = httpd_response_handlers[i].path_encoded,
+            .method = HTTP_GET,
+            .handler = httpd_request_handler,
+            .user_ctx = (void*)httpd_response_handlers[i].handler};
+        ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
+    }
+}
+```
+In the command line from earlier we've included epilogue code in each handler function to `free(resp_arg)` - you'll see that code at the end of each handler function above.
