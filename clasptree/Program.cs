@@ -213,13 +213,13 @@ namespace clasptree
 							{
 								if (handlers == HandlersMode.extended)
 								{
-									handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}{fname}_{f.Key}"));
+									handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}content_{f.Key}"));
 								}
 								dname = dname.Substring(0, dname.Length - 1);
 							}
-							handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}{fname}_{f.Key}"));
+							handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}content_{f.Key}"));
 						}
-						handlersList.Add(new HandlerEntry("/" + mname, "/" + System.Web.HttpUtility.UrlPathEncode(mname), $"{prefix}{fname}_{f.Key}"));
+						handlersList.Add(new HandlerEntry("/" + mname, "/" + System.Web.HttpUtility.UrlPathEncode(mname), $"{prefix}content_{f.Key}"));
 					}
 					handlersList.Sort((x, y) => x.Path.CompareTo(y.Path));
 				}
@@ -240,7 +240,7 @@ namespace clasptree
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
 					indout.Write($"// ./{mname}\r\n");
-					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
+					indout.Write($"void {prefix}content_{f.Key}(void* {state});\r\n");
 				}
 				indout.Write("\r\n");
 				indout.Write("#ifdef __cplusplus\r\n");
@@ -274,7 +274,7 @@ namespace clasptree
 				foreach (var f in files)
 				{
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state}) {{\r\n");
+					indout.Write($"void {prefix}content_{f.Key}(void* {state}) {{\r\n");
 					if (f.Value.Extension.ToLowerInvariant() == ".clasp")
 					{
 						indout.IndentLevel++;

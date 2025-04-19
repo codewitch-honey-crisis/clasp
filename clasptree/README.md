@@ -65,13 +65,13 @@ extern "C" {
 #endif
 
 // ./favicon.ico
-void httpd_httpd_content_favicon_ico(void* resp_arg);
+void httpd_content_favicon_ico(void* resp_arg);
 // ./index.clasp
-void httpd_httpd_content_index_clasp(void* resp_arg);
+void httpd_content_index_clasp(void* resp_arg);
 // ./image/S01E01 Pilot.jpg
-void httpd_httpd_content_image_S01E01_Pilot_jpg(void* resp_arg);
+void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg);
 // ./style/w3.css
-void httpd_httpd_content_style_w3_css(void* resp_arg);
+void httpd_content_style_w3_css(void* resp_arg);
 
 #ifdef __cplusplus
 }
@@ -82,13 +82,13 @@ void httpd_httpd_content_style_w3_css(void* resp_arg);
 #ifdef HTTPD_CONTENT_IMPLEMENTATION
 
 httpd_response_handler_t httpd_response_handlers[5] = {
-    { "/", "/", httpd_httpd_content_index_clasp },
-    { "/favicon.ico", "/favicon.ico", httpd_httpd_content_favicon_ico },
-    { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_httpd_content_image_S01E01_Pilot_jpg },
-    { "/index.clasp", "/index.clasp", httpd_httpd_content_index_clasp },
-    { "/style/w3.css", "/style/w3.css", httpd_httpd_content_style_w3_css }
+    { "/", "/", httpd_content_index_clasp },
+    { "/favicon.ico", "/favicon.ico", httpd_content_favicon_ico },
+    { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_content_image_S01E01_Pilot_jpg },
+    { "/index.clasp", "/index.clasp", httpd_content_index_clasp },
+    { "/style/w3.css", "/style/w3.css", httpd_content_style_w3_css }
 };
-void httpd_httpd_content_favicon_ico(void* resp_arg) {
+void httpd_content_favicon_ico(void* resp_arg) {
     // HTTP/1.1 200 OK
     // Content-Type: image/x-icon
     // Content-Encoding: deflate
@@ -101,7 +101,7 @@ void httpd_httpd_content_favicon_ico(void* resp_arg) {
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
-void httpd_httpd_content_index_clasp(void* resp_arg) {
+void httpd_content_index_clasp(void* resp_arg) {
     httpd_send_block("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\nC5\r\n<!DO"
         "CTYPE html>\r\n<html>\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewpor"
         "t\" content=\"width=device-width, initial-scale=1\">\r\n    <link rel=\"stylesheet\" hr"
@@ -168,7 +168,7 @@ void httpd_httpd_content_index_clasp(void* resp_arg) {
         "\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
     free(resp_arg);
 }
-void httpd_httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
+void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
     // HTTP/1.1 200 OK
     // Content-Type: image/jpeg
     // Content-Encoding: deflate
@@ -181,7 +181,7 @@ void httpd_httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
-void httpd_httpd_content_style_w3_css(void* resp_arg) {
+void httpd_content_style_w3_css(void* resp_arg) {
     // HTTP/1.1 200 OK
     // Content-Type: text/css
     // Content-Encoding: deflate
