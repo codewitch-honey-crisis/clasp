@@ -37,7 +37,7 @@ Consider the following
 ```
 clasptree www esp32_www\include\httpd_content.h /prefix httpd_ /epilogue www_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr
 ```
-This will take all the content in a folder called www, and generate a header file called www_content.h with it.
+This will take all the content in a folder called www, and generate a header file called httpd_content.h with it.
 It specifies the prefix to use for the generated symbols, an epilogue of code to append in each method, the argument and the methods used to send data.
 
 To understand the details of how it works see the READMEs for CLASP and ClStat_
