@@ -282,4 +282,4 @@ static void httpd_init() {
     }
 }
 ```
-In the command line from earlier we've included epilogue code in each handler function to `free(resp_arg)` - you'll see that code at the end of each handler function above.
+In the command line from earlier we've included epilogue code in each handler function to `free(resp_arg);` - you'll see that code at the end of each handler function above.
