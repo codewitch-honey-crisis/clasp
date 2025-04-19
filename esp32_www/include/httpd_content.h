@@ -30,10 +30,10 @@ void httpd_httpd_content_style_w3_css(void* resp_arg);
 #ifdef HTTPD_CONTENT_IMPLEMENTATION
 
 httpd_response_handler_t httpd_response_handlers[5] = {
-    { "/favicon.ico", "/favicon.ico", httpd_httpd_content_favicon_ico },
     { "/", "/", httpd_httpd_content_index_clasp },
-    { "/index.clasp", "/index.clasp", httpd_httpd_content_index_clasp },
+    { "/favicon.ico", "/favicon.ico", httpd_httpd_content_favicon_ico },
     { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_httpd_content_image_S01E01_Pilot_jpg },
+    { "/index.clasp", "/index.clasp", httpd_httpd_content_index_clasp },
     { "/style/w3.css", "/style/w3.css", httpd_httpd_content_style_w3_css }
 };
 void httpd_httpd_content_favicon_ico(void* resp_arg) {

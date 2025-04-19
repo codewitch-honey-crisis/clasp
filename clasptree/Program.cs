@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Xml.Linq;
 namespace clasptree
 {
 	enum HandlersMode
@@ -96,7 +97,18 @@ namespace clasptree
 				return obj.FullName.GetHashCode();
 			}
 		}
-
+		struct HandlerEntry
+		{
+			public string Path;
+			public string EncodedPath;
+			public string Method;
+			public HandlerEntry(string path, string encodedPath, string method)
+			{
+				Path = path;
+				EncodedPath = encodedPath;
+				Method = method;
+			}
+		}
 		static int Main(string[] args)
 		{
 #if !DEBUG
@@ -223,43 +235,44 @@ namespace clasptree
 				indout.Write($"#endif // {def}\r\n\r\n");
 				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
 				indout.Write($"#ifdef {impl}\r\n\r\n");
-				
 				if (handlers!=HandlersMode.none)
 				{
+					var handlersList = new List<HandlerEntry>();
 					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{handlersCount}] = {{\r\n");
-					int i = 0;
 					foreach (var f in files)
 					{
 						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-						
-						if(deffia.Contains(f.Value,new FIAEqComp())) {
+
+						if (deffia.Contains(f.Value, new FIAEqComp()))
+						{
 							// generate a default for this one
 							var dname = "";
 							int li = mname.LastIndexOf('/');
-							if (li> -1) {
+							if (li > -1)
+							{
 								dname = mname.Substring(0, li + 1);
 							}
-							if(dname.Length>1)
+							if (dname.Length > 1)
 							{
-								if(handlers==HandlersMode.extended)
+								if (handlers == HandlersMode.extended)
 								{
-									indout.Write("    { ");
-									indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + dname)}");
-									indout.Write(", ");
-									indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(dname))}, {prefix}{fname}_{f.Key} }},\r\n");
+									handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}{fname}_{f.Key}"));
 								}
-								dname=dname.Substring(0,dname.Length-1);
+								dname = dname.Substring(0, dname.Length - 1);
 							}
-							indout.Write("    { ");
-							indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + dname)}");
-							indout.Write(", ");
-							indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(dname))}, {prefix}{fname}_{f.Key} }},\r\n");
+							handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}{fname}_{f.Key}"));
 						}
+						handlersList.Add(new HandlerEntry("/" + mname, "/" + System.Web.HttpUtility.UrlPathEncode(mname), $"{prefix}{fname}_{f.Key}"));
+					}
+					handlersList.Sort((x, y) => x.Path.CompareTo(y.Path));
+					for (var i = 0; i < handlersList.Count; i++)
+					{
+						var handler = handlersList[i];
 						indout.Write("    { ");
-						indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/"+mname)}");
+						indout.Write($"{clasp.ClaspUtility.ToSZLiteral(handler.Path)}");
 						indout.Write(", ");
-						indout.Write($"{clasp.ClaspUtility.ToSZLiteral("/" + System.Web.HttpUtility.UrlPathEncode(mname))}, {prefix}{fname}_{f.Key}");
-						if (i < files.Count - 1)
+						indout.Write($"{clasp.ClaspUtility.ToSZLiteral(handler.EncodedPath)}, {handler.Method}");
+						if (i < handlersList.Count - 1)
 						{
 							indout.Write(" },\r\n");
 						}
@@ -268,7 +281,6 @@ namespace clasptree
 							indout.Write(" }\r\n");
 
 						}
-						++i;
 					}
 					indout.Write("};\r\n");
 				}
