@@ -62,7 +62,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT &&
                event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (wifi_retry_count < 3) {
+        if (wifi_retry_count < 10) {
             esp_wifi_connect();
             ++wifi_retry_count;
         } else {
