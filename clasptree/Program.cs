@@ -193,52 +193,9 @@ namespace clasptree
 				indout.Write($"#define {def}\r\n");
 				indout.Write("\r\n");
 				indout.Write(includes.ToString()+"\r\n");
-				int handlersCount = (handlers != HandlersMode.none) ? files.Count + deffia.Count : 0;
-				if (handlers == HandlersMode.extended)
+				var handlersList = new List<HandlerEntry>();
+				if (handlers != HandlersMode.none)
 				{
-					foreach (var f in files)
-					{
-						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-
-						if (deffia.Contains(f.Value, new FIAEqComp()))
-						{
-							int li = mname.LastIndexOf('/');
-							if (li > -1 && li != mname.Length - 1)
-							{
-								handlersCount++;
-							}
-						}
-					}
-				}
-				if (handlers!=HandlersMode.none)
-				{
-					indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {handlersCount}\r\n");
-					indout.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
-					indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{handlersCount}];\r\n");
-				}
-
-
-				indout.Write("#ifdef __cplusplus\r\n");
-				indout.Write("extern \"C\" {\r\n");
-				indout.Write("#endif\r\n");
-				indout.Write("\r\n");
-				foreach (var f in files)
-				{
-					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
-					indout.Write($"// ./{mname}\r\n");
-					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
-				}
-				indout.Write("\r\n");
-				indout.Write("#ifdef __cplusplus\r\n");
-				indout.Write("}\r\n");
-				indout.Write("#endif\r\n\r\n");
-				indout.Write($"#endif // {def}\r\n\r\n");
-				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
-				indout.Write($"#ifdef {impl}\r\n\r\n");
-				if (handlers!=HandlersMode.none)
-				{
-					var handlersList = new List<HandlerEntry>();
-					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{handlersCount}] = {{\r\n");
 					foreach (var f in files)
 					{
 						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
@@ -265,6 +222,36 @@ namespace clasptree
 						handlersList.Add(new HandlerEntry("/" + mname, "/" + System.Web.HttpUtility.UrlPathEncode(mname), $"{prefix}{fname}_{f.Key}"));
 					}
 					handlersList.Sort((x, y) => x.Path.CompareTo(y.Path));
+				}
+
+				if (handlers!=HandlersMode.none)
+				{
+					indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {handlersList.Count}\r\n");
+					indout.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
+					indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{handlersList.Count}];\r\n");
+				}
+
+
+				indout.Write("#ifdef __cplusplus\r\n");
+				indout.Write("extern \"C\" {\r\n");
+				indout.Write("#endif\r\n");
+				indout.Write("\r\n");
+				foreach (var f in files)
+				{
+					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
+					indout.Write($"// ./{mname}\r\n");
+					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
+				}
+				indout.Write("\r\n");
+				indout.Write("#ifdef __cplusplus\r\n");
+				indout.Write("}\r\n");
+				indout.Write("#endif\r\n\r\n");
+				indout.Write($"#endif // {def}\r\n\r\n");
+				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
+				indout.Write($"#ifdef {impl}\r\n\r\n");
+				if (handlers!=HandlersMode.none)
+				{
+					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{handlersList.Count}] = {{\r\n");
 					for (var i = 0; i < handlersList.Count; i++)
 					{
 						var handler = handlersList[i];
