@@ -239,7 +239,7 @@ You can now access and register the handlers' paths and associated handler metho
 Here's an example of using the generated handlers array to initialize the web server (ESP-IDF/ESP32)
 
 ```cpp
-static httpd_handle_t httpd_handle = nullptr;
+static httpd_handle_t httpd_handle = NULL;
 struct httpd_async_resp_arg {
     httpd_handle_t hd;
     int fd;
@@ -247,7 +247,7 @@ struct httpd_async_resp_arg {
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
     httpd_async_resp_arg* resp_arg =
         (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
-    if (resp_arg == nullptr) {
+    if (resp_arg == NULL) {
         return ESP_ERR_NO_MEM;
     }
     httpd_parse_url(req->uri);
