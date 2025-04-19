@@ -1,9 +1,9 @@
 ﻿// Generated with clasptree
-// To use this file, define WWW_CONTENT_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.
-#ifndef WWW_CONTENT_H
-#define WWW_CONTENT_H
+// To use this file, define HTTPD_CONTENT_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.
+#ifndef HTTPD_CONTENT_H
+#define HTTPD_CONTENT_H
 
-#include "httpd_root_api.h"
+#include "httpd_application.h"
 
 #define HTTPD_RESPONSE_HANDLER_COUNT 5
 typedef struct { const char* path; const char* path_encoded; void (* handler) (void* arg); } httpd_response_handler_t;
@@ -13,30 +13,30 @@ extern "C" {
 #endif
 
 // ./favicon.ico
-void httpd_www_content_favicon_ico(void* resp_arg);
+void httpd_httpd_content_favicon_ico(void* resp_arg);
 // ./index.clasp
-void httpd_www_content_index_clasp(void* resp_arg);
+void httpd_httpd_content_index_clasp(void* resp_arg);
 // ./image/S01E01 Pilot.jpg
-void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg);
+void httpd_httpd_content_image_S01E01_Pilot_jpg(void* resp_arg);
 // ./style/w3.css
-void httpd_www_content_style_w3_css(void* resp_arg);
+void httpd_httpd_content_style_w3_css(void* resp_arg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // WWW_CONTENT_H
+#endif // HTTPD_CONTENT_H
 
-#ifdef WWW_CONTENT_IMPLEMENTATION
+#ifdef HTTPD_CONTENT_IMPLEMENTATION
 
 httpd_response_handler_t httpd_response_handlers[5] = {
-    { "/favicon.ico", "/favicon.ico", httpd_www_content_favicon_ico },
-    { "/", "/", httpd_www_content_index_clasp },
-    { "/index.clasp", "/index.clasp", httpd_www_content_index_clasp },
-    { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_www_content_image_S01E01_Pilot_jpg },
-    { "/style/w3.css", "/style/w3.css", httpd_www_content_style_w3_css }
+    { "/favicon.ico", "/favicon.ico", httpd_httpd_content_favicon_ico },
+    { "/", "/", httpd_httpd_content_index_clasp },
+    { "/index.clasp", "/index.clasp", httpd_httpd_content_index_clasp },
+    { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_httpd_content_image_S01E01_Pilot_jpg },
+    { "/style/w3.css", "/style/w3.css", httpd_httpd_content_style_w3_css }
 };
-void httpd_www_content_favicon_ico(void* resp_arg) {
+void httpd_httpd_content_favicon_ico(void* resp_arg) {
     // HTTP/1.1 200 OK
     // Content-Type: image/x-icon
     // Content-Encoding: deflate
@@ -85,7 +85,7 @@ void httpd_www_content_favicon_ico(void* resp_arg) {
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
-void httpd_www_content_index_clasp(void* resp_arg) {
+void httpd_httpd_content_index_clasp(void* resp_arg) {
     httpd_send_block("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\nC5\r\n<!DO"
         "CTYPE html>\r\n<html>\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewpor"
         "t\" content=\"width=device-width, initial-scale=1\">\r\n    <link rel=\"stylesheet\" hr"
@@ -152,7 +152,7 @@ void httpd_www_content_index_clasp(void* resp_arg) {
         "\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
     free(resp_arg);
 }
-void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg) {
+void httpd_httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
     // HTTP/1.1 200 OK
     // Content-Type: image/jpeg
     // Content-Encoding: deflate
@@ -720,7 +720,7 @@ void httpd_www_content_image_S01E01_Pilot_jpg(void* resp_arg) {
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
-void httpd_www_content_style_w3_css(void* resp_arg) {
+void httpd_httpd_content_style_w3_css(void* resp_arg) {
     // HTTP/1.1 200 OK
     // Content-Type: text/css
     // Content-Encoding: deflate
@@ -997,4 +997,4 @@ void httpd_www_content_style_w3_css(void* resp_arg) {
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
-#endif // WWW_CONTENT_IMPLEMENTATION
+#endif // HTTPD_CONTENT_IMPLEMENTATION

@@ -215,7 +215,6 @@ namespace clasptree
 					var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
 					indout.Write($"// ./{mname}\r\n");
 					indout.Write($"void {prefix}{fname}_{f.Key}(void* {state});\r\n");
-
 				}
 				indout.Write("\r\n");
 				indout.Write("#ifdef __cplusplus\r\n");

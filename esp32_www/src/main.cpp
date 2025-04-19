@@ -27,8 +27,8 @@
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 
-#define WWW_CONTENT_IMPLEMENTATION
-#include "www_content.h"
+#define HTTPD_CONTENT_IMPLEMENTATION
+#include "httpd_content.h"
 
 // these are globals we use in the page
 
