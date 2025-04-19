@@ -3,6 +3,8 @@
 #ifndef WWW_CONTENT_H
 #define WWW_CONTENT_H
 
+#include "httpd_root_api.h"
+
 #define HTTPD_RESPONSE_HANDLER_COUNT 5
 typedef struct { const char* path; const char* path_encoded; void (* handler) (void* arg); } httpd_response_handler_t;
 extern httpd_response_handler_t httpd_response_handlers[5];

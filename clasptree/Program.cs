@@ -118,16 +118,53 @@ namespace clasptree
 				var prolStr = prologue != null ? prologue.ReadToEnd() : "";
 				var epilStr = epilogue != null ? epilogue.ReadToEnd() : "";
 				var fia = input.GetFiles("*.*", SearchOption.AllDirectories);
-				var deffia = input.GetFiles(index, SearchOption.AllDirectories);
+				var deffia = new List<FileInfo>(input.GetFiles(index, SearchOption.AllDirectories));
+				for(int i = 0; i < deffia.Count; i++)
+				{
+					var file = deffia[i];
+					if(file.Extension.ToLowerInvariant()==".h")
+					{
+						deffia.RemoveAt(i--);
+					}
+				}
 				var files = new Dictionary<string, FileSystemInfo>();
+				var includes = new StringBuilder();
 				for (int i = 0; i < fia.Length; i++)
 				{
 					var fi = fia[i];
-					var mname = fi.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); 
-					var sn = MakeSafeName(mname);
-					if (!string.IsNullOrEmpty(sn))
+					if (fi.Extension.ToLowerInvariant() == ".h")
 					{
-						files[sn] = fi;
+						var relpath = fi.Directory.FullName.Substring(Path.GetFullPath(input.FullName).Length);
+						if(relpath.StartsWith(Path.DirectorySeparatorChar))
+						{
+							relpath = relpath.Substring(1);
+						}
+						var outdir = Path.GetDirectoryName(CliUtility.GetFilename(output));
+						var outfulldir = Path.GetFullPath(outdir);
+						var fn = Path.Combine(outfulldir, Path.Combine(relpath, fi.Name));
+						includes.Append($"#include \"{Path.Combine(relpath,Path.GetFileName(fn))}\"\r\n");
+						var dir = Path.GetDirectoryName(fn);
+						if (!Directory.Exists(dir))
+						{
+							Directory.CreateDirectory(dir);
+						}
+						
+						
+						try
+						{
+							File.Delete(fn);
+						}
+						catch { }
+						fi.CopyTo(fn);
+					}
+					else
+					{
+						var mname = fi.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/');
+						var sn = MakeSafeName(mname);
+						if (!string.IsNullOrEmpty(sn))
+						{
+							files[sn] = fi;
+						}
 					}
 				}
 				var fname = input.Name;
@@ -143,7 +180,8 @@ namespace clasptree
 				indout.Write($"#ifndef {def}\r\n");
 				indout.Write($"#define {def}\r\n");
 				indout.Write("\r\n");
-				int handlersCount = (handlers != HandlersMode.none) ? files.Count + deffia.Length : 0;
+				indout.Write(includes.ToString()+"\r\n");
+				int handlersCount = (handlers != HandlersMode.none) ? files.Count + deffia.Count : 0;
 				if (handlers == HandlersMode.extended)
 				{
 					foreach (var f in files)

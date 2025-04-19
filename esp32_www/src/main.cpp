@@ -26,25 +26,25 @@
 #include "esp_vfs_fat.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
+
+#define WWW_CONTENT_IMPLEMENTATION
+#include "www_content.h"
+
 // these are globals we use in the page
 
-static const float example_star_rating = 3.8;
-static const char* episode_title = "Pilot";
-static const char* show_title = "Burn Notice";
-static const unsigned char episode_number = 1;
-static const unsigned char season_number = 1;
-static const char* episode_description = "While on assignment, agent Michael Westen gets a \"Burn Notice\" and becomes untouchable. Having no idea what or who triggered his demise, Michael returns to his hometown, Miami, determined to find out the reason for his sudden termination.";
+const float example_star_rating = 3.8;
+const char* episode_title = "Pilot";
+const char* show_title = "Burn Notice";
+const unsigned char episode_number = 1;
+const unsigned char season_number = 1;
+const char* episode_description = "While on assignment, agent Michael Westen gets a \"Burn Notice\" and becomes untouchable. Having no idea what or who triggered his demise, Michael returns to his hometown, Miami, determined to find out the reason for his sudden termination.";
 static void httpd_send_block(const char* data, size_t len, void* arg);
 static void httpd_send_expr(int expr, void* arg);
 static void httpd_send_expr(unsigned char expr, void* arg);
 static void httpd_send_expr(float expr, void* arg);
 static void httpd_send_expr(const char* expr, void* arg);
-static char enc_rfc3986[256] = {0};
-static char enc_html5[256] = {0};
-static char *httpd_url_encode(char *enc, size_t size, const char *s, const char *table);
-
-#define WWW_CONTENT_IMPLEMENTATION
-#include "www_content.h"
+char enc_rfc3986[256] = {0};
+char enc_html5[256] = {0};
 #ifdef M5STACK_CORE2
 using namespace esp_idf;  // devices
 #endif
