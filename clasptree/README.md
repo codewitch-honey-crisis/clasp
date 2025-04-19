@@ -192,7 +192,7 @@ void httpd_httpd_content_style_w3_css(void* resp_arg) {
 ```
 (some of the binary data omitted from above)
 
-You'll often declare something like `httpd_application.h` and put it in your web root.
+You'll often declare something like `httpd_application.h` and put it in your web root. Whenever ClASP-Tree encounters a .h file it will copy the header into the same relative directory structure in the output's directory, and add an `#include` to the newly copied file.
 This will contain declarations used in your pages. The following is included with the demo:
 
 ```cpp
