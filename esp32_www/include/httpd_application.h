@@ -1,5 +1,5 @@
-﻿#ifndef HTTPD_ROOT_API_H
-#define HTTPD_ROOT_API_H
+﻿#ifndef HTTPD_APPLICATION_H
+#define HTTPD_APPLICATION_H
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -21,4 +21,4 @@ extern char enc_rfc3986[256];
 extern char enc_html5[256];
 static char* httpd_url_encode(char* enc, size_t size, const char* s, const char* table);
 
-#endif
+#endif // HTTPD_APPLICATION_H
