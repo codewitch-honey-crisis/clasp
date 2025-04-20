@@ -25,7 +25,7 @@ namespace clasp
 		public static string state = "response_state";
 		[CmdArg(Name = "nostatus", Optional = true, Description = "Suppress the status headers")]
 		public static bool nostatus = false;
-		[CmdArg(Name = "headers", Optional =true,Description ="Indicates which headers should be generated (auto, none or required). Defaults to auto")]
+		[CmdArg(Name = "headers", Optional =true,ElementName ="headers", Description ="Indicates which headers should be generated (auto, none or required). Defaults to auto")]
 		public static ClaspHeaderMode headers = ClaspHeaderMode.auto;
 
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]

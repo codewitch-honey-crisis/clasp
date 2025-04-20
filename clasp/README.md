@@ -13,6 +13,7 @@ Generates C code from ASPish pages for use with embedded web servers
 Usage:
 
 clasp <inputfile> [ <outputfile> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /nostatus ]
+    [ /headers <headers> ]
 
 <inputfile>      The input file
 <outputfile>     The output file. Defaults to <stdout>
@@ -20,6 +21,7 @@ clasp <inputfile> [ <outputfile> ] [ /block <block> ] [ /expr <expr> ] [ /state 
 <expr>           The function call to send an expression to the client. Defaults to response_expr
 <state>          The variable name that holds the user state to pass to the response functions. Defaults to response_state
 /nostatus        Suppress the status headers
+<headers>        Indicates which headers should be generated (auto, none or required). Defaults to auto
 
 clasp /?
 
