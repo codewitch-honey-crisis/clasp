@@ -8,13 +8,14 @@ namespace clasp
 {
 	internal static class ClaspUtility
 	{
-		public static string ToSZLiteral(byte[] ba)
+		public static string ToSZLiteral(byte[] ba, int startSpacing = 0 )
 		{
 			var sb = new StringBuilder((int)(ba.Length * 1.5));
 			sb.Append('"');
-			for (int i = 0; i < ba.Length; ++i)
+			int j = startSpacing;
+			for (int i = 0; i < ba.Length; ++i,++j)
 			{
-				if (i > 0 && 0 == (i % 80) && i < ba.Length - 1)
+				if (i > 0 && 0 == (j % 80) && i < ba.Length - 1)
 				{
 					sb.Append("\"\r\n    \"");
 				}
@@ -49,7 +50,7 @@ namespace clasp
 			sb.Append('\"');
 			return sb.ToString();
 		}
-		public static string ToSZLiteral(string value)
+		public static string ToSZLiteral(string value, int startSpacing=0)
 		{
 			var ba = Encoding.UTF8.GetBytes(value);
 			return ToSZLiteral(ba);

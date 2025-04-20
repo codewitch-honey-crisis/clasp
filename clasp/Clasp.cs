@@ -38,7 +38,7 @@ namespace clasp
 			{
 				var ba = Encoding.UTF8.GetBytes(resp);
 				output.Write(block + "(");
-				output.Write(clasp.ClaspUtility.ToSZLiteral(ba));
+				output.Write(clasp.ClaspUtility.ToSZLiteral(ba,block.Length+1));
 				output.Write(", ");
 				output.Write(ba.Length);
 				output.Write($", {state});\r\n");
@@ -63,7 +63,7 @@ namespace clasp
 			{
 				var ba = Encoding.UTF8.GetBytes(text);
 				output.Write(block + "(");
-				output.Write(clasp.ClaspUtility.ToSZLiteral(ba));
+				output.Write(clasp.ClaspUtility.ToSZLiteral(ba,block.Length+1));
 				output.Write($", {ba.Length}, {state});\r\n");
 				output.Flush();
 			}
