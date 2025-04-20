@@ -7,6 +7,10 @@
     "help": {
       "commandName": "Project",
       "commandLineArgs": "/?"
+    },
+    "no status": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\esp32_www\\include\\httpd_content.h /prefix httpd_ /epilogue ..\\..\\..\\httpd_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /nostatus"
     }
   }
 }

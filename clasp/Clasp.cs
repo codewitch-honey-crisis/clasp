@@ -17,6 +17,8 @@ namespace clasp
 		public static string expr = "response_expr";
 		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
 		public static string state = "response_state";
+		[CmdArg(Name = "nostatus", Optional = true, Description = "Suppress the status headers")]
+		public static bool nostatus;
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		public static bool help = false;
 		
@@ -433,7 +435,7 @@ namespace clasp
 								{
 									autoHeaders = false;
 								}
-								hasStatus = true;
+								hasStatus = !nostatus;
 								statusCode = cc;
 								statusText = t;
 								break;

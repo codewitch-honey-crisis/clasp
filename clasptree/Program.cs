@@ -33,6 +33,8 @@ namespace clasptree
 		static HandlersMode handlers = HandlersMode.@default;
 		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard. Defaults to \"index.*\"")]
 		static string index = "index.*";
+		[CmdArg(Name = "nostatus", Optional = true, Description = "Suppress the status headers")]
+		public static bool nostatus = false;
 
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		static bool help = false;
@@ -283,6 +285,7 @@ namespace clasptree
 						clasp.Clasp.state = state;
 						clasp.Clasp.block = block;
 						clasp.Clasp.expr = expr;
+						clasp.Clasp.nostatus = nostatus;
 						if (!string.IsNullOrEmpty(prolStr))
 						{
 							indout.Write($"{prolStr}\r\n");
@@ -308,7 +311,7 @@ namespace clasptree
 						clstat.CLStat.state = state;
 						clstat.CLStat.input = (FileInfo)f.Value;
 						clstat.CLStat.output = indout;
-						clstat.CLStat.nostatus = false;
+						clstat.CLStat.nostatus = nostatus;
 						if (!string.IsNullOrEmpty(prolStr))
 						{
 							indout.Write($"{prolStr}\r\n");
