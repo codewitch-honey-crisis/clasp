@@ -11,9 +11,9 @@
 #define SD_CS 4
 #endif
 #include <math.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
-#include <ctype.h>
 #ifdef M5STACK_CORE2
 #include <esp_i2c.hpp>        // i2c initialization
 #include <m5core2_power.hpp>  // AXP192 power management (core2)
