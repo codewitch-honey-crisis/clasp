@@ -286,6 +286,7 @@ namespace clasptree
 						clasp.Clasp.block = block;
 						clasp.Clasp.expr = expr;
 						clasp.Clasp.nostatus = nostatus;
+						clasp.Clasp.headers = clasp.ClaspHeaderMode.required;
 						if (!string.IsNullOrEmpty(prolStr))
 						{
 							indout.Write($"{prolStr}\r\n");

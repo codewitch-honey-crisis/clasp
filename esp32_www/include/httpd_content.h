@@ -86,7 +86,7 @@ void httpd_content_favicon_ico(void* resp_arg) {
     free(resp_arg);
 }
 void httpd_content_index_clasp(void* resp_arg) {
-    httpd_send_block("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\nC5\r\n<!DO"
+    httpd_send_block("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: text/html\r\n\r\nC5\r\n<!DO"
         "CTYPE html>\r\n<html>\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewpor"
         "t\" content=\"width=device-width, initial-scale=1\">\r\n    <link rel=\"stylesheet\" hr"
         "ef=\"./style/w3.css\">\r\n    <title>\r\n", 275, resp_arg);

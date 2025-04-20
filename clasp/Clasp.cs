@@ -5,20 +5,29 @@ using System.Text;
 
 namespace clasp
 {
+	internal enum ClaspHeaderMode
+	{
+		auto = 0,
+		none = 1,
+		required = 2
+	}
 	internal class Clasp
 	{
 		[CmdArg(Ordinal = 0, Optional = false)]
 		public static TextReader input = null;
 		[CmdArg(Ordinal = 1, Optional = true)]
 		public static TextWriter output = Console.Out;
-		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
+		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client")]
 		public static string block = "response_block";
-		[CmdArg(Name = "expr", ElementName = "expr", Optional = true, Description = "The function call to send an expression to the client.")]
+		[CmdArg(Name = "expr", ElementName = "expr", Optional = true, Description = "The function call to send an expression to the client")]
 		public static string expr = "response_expr";
-		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
+		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions")]
 		public static string state = "response_state";
 		[CmdArg(Name = "nostatus", Optional = true, Description = "Suppress the status headers")]
-		public static bool nostatus;
+		public static bool nostatus = false;
+		[CmdArg(Name = "headers", Optional =true,Description ="Indicates which headers should be generated (auto, none or required). Defaults to auto")]
+		public static ClaspHeaderMode headers = ClaspHeaderMode.auto;
+
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		public static bool help = false;
 		
@@ -95,7 +104,7 @@ namespace clasp
 			{
 				i += 2;
 			}
-			return s.Length - i;
+			return Encoding.UTF8.GetByteCount(s) - i;
 		}
 		public static int Run()
 		{
@@ -107,7 +116,7 @@ namespace clasp
 			var hasStatus = false;
 			var statusCode = 0;
 			string statusText = null;
-			var headers = new StringBuilder();
+			var headerBuilder = new StringBuilder();
 			var pastDirectives = false;
 			var line = 1;
 			var current = new StringBuilder();
@@ -123,6 +132,21 @@ namespace clasp
 			var hasContentLength = false;
 			var hasTransferEncodingChunked = false;
 			var isStatic = !ScanForCodeBlocks(inputString);
+			if(!isStatic)
+			{
+				if(headers==ClaspHeaderMode.required)
+				{
+					hasTransferEncodingChunked=true;
+					headerBuilder.Append("Transfer-Encoding: chunked\r\n");
+				} 
+			} else
+			{
+				if (headers == ClaspHeaderMode.required)
+				{
+					hasTransferEncodingChunked = true;
+					headerBuilder.Append($"Content-Length: {StaticLen(inputString)}\r\n");
+				}
+			}
 			var len = StaticLen(inputString);
 			var i = inputBuffer.Read();
 			var s = 0;
@@ -140,9 +164,9 @@ namespace clasp
 							{
 								str = $"HTTP/1.1 {statusCode} {statusText}\r\n";
 							}
-							if (headers.Length > 0)
+							if (headerBuilder.Length > 0)
 							{
-								headerText = str + $"{headers.ToString().TrimEnd()}\r\n";
+								headerText = str + $"{headerBuilder.ToString().TrimEnd()}\r\n";
 							}
 							else
 							{
@@ -171,9 +195,9 @@ namespace clasp
 								{
 									str = $"HTTP/1.1 {statusCode} {statusText}\r\n";
 								}
-								if (headers.Length > 0)
+								if (headerBuilder.Length > 0)
 								{
-									headerText = str + $"{headers.ToString().TrimEnd()}\r\n";
+									headerText = str + $"{headerBuilder.ToString().TrimEnd()}\r\n";
 								}
 								else
 								{
@@ -199,8 +223,12 @@ namespace clasp
 										hasTransferEncodingChunked = true;
 									}
 								}
-								Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
+								if (headers != ClaspHeaderMode.none)
+								{
+									Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
+								}
 								headerText = null;
+								
 							}
 							else
 							{
@@ -221,9 +249,9 @@ namespace clasp
 								{
 									str = $"HTTP/1.1 {statusCode} {statusText}\r\n";
 								}
-								if (headers.Length > 0)
+								if (headerBuilder.Length > 0)
 								{
-									headerText = str + $"{headers.ToString().TrimEnd()}\r\n";
+									headerText = str + $"{headerBuilder.ToString().TrimEnd()}\r\n";
 								}
 								else
 								{
@@ -277,7 +305,10 @@ namespace clasp
 										hasTransferEncodingChunked = true;
 									}
 								}
-								Emit(headerText);
+								if (headers != ClaspHeaderMode.none)
+								{
+									Emit(headerText+"\r\n");
+								}
 								headerText = null;
 							}
 							EmitExpression(current.ToString());
@@ -302,7 +333,10 @@ namespace clasp
 										hasTransferEncodingChunked = true;
 									}
 								}
-								Emit(headerText + "\r\n");
+								if (headers != ClaspHeaderMode.none)
+								{
+									Emit(headerText + "\r\n");
+								}
 								headerText = null;
 							}
 							EmitCodeBlock(current.ToString());
@@ -431,7 +465,7 @@ namespace clasp
 								}
 								string ah;
 								bool b;
-								if (dirArgs.TryGetValue("auto-headers", out ah) && bool.TryParse(ah, out b) && !b)
+								if (dirArgs.TryGetValue("auto-headerBuilder", out ah) && bool.TryParse(ah, out b) && !b)
 								{
 									autoHeaders = false;
 								}
@@ -470,7 +504,7 @@ namespace clasp
 								{
 									hasContentLength = true;
 								}
-								headers.Append($"{n}: {v}\r\n");
+								headerBuilder.Append($"{n}: {v}\r\n");
 								break;
 						}
 
@@ -511,11 +545,24 @@ namespace clasp
 							}
 							if (!isStatic)
 							{
-								Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
+								if (headers != ClaspHeaderMode.none)
+								{
+
+									Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
+								} else
+								{
+									EmitResponseBlock(current.ToString());
+								}
 							}
 							else
 							{
-								Emit(headerText + "\r\n" + current.ToString());
+								if (headers != ClaspHeaderMode.none)
+								{
+									Emit(headerText + "\r\n" + current.ToString());
+								} else
+								{
+									Emit(current.ToString());
+								}
 							}
 							headerText = null;
 						}
@@ -544,7 +591,10 @@ namespace clasp
 									hasTransferEncodingChunked = true;
 								}
 							}
-							Emit(headerText + "\r\n");
+							if (headers != ClaspHeaderMode.none)
+							{
+								Emit(headerText + "\r\n");
+							}
 							headerText = null;
 						}
 					}
@@ -572,7 +622,10 @@ namespace clasp
 								hasTransferEncodingChunked = true;
 							}
 						}
-						Emit(headerText + "\r\n");
+						if (headers != ClaspHeaderMode.none)
+						{
+							Emit(headerText + "\r\n");
+						}
 						headerText = null;
 					}
 					if (current.Length > 0)
@@ -591,7 +644,10 @@ namespace clasp
 								hasTransferEncodingChunked = true;
 							}
 						}
-						Emit(headerText + "\r\n");
+						if (headers != ClaspHeaderMode.none)
+						{
+							Emit(headerText + "\r\n");
+						}
 						headerText = null;
 					}
 					if (current.Length > 0)
@@ -610,7 +666,11 @@ namespace clasp
 								hasTransferEncodingChunked = true;
 							}
 						}
-						Emit(headerText + "\r\n");
+						if (headers != ClaspHeaderMode.none)
+						{
+							Emit(headerText + "\r\n");
+					
+						}
 						headerText = null;
 					}
 					current.Append('%');
@@ -627,7 +687,10 @@ namespace clasp
 								hasTransferEncodingChunked = true;
 							}
 						}
-						Emit(headerText + "\r\n");
+						if (headers != ClaspHeaderMode.none)
+						{
+							Emit(headerText + "\r\n");
+						}
 						headerText = null;
 					}
 					current.Append('%');
