@@ -12,14 +12,14 @@ Generates C code from ASPish pages for use with embedded web servers
 
 Usage:
 
-clasp <inputfile> [ <outputfile> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /method <method> ]
+clasp <inputfile> [ <outputfile> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /nostatus ]
 
 <inputfile>      The input file
 <outputfile>     The output file. Defaults to <stdout>
 <block>          The function call to send a literal block to the client. Defaults to response_block
 <expr>           The function call to send an expression to the client. Defaults to response_expr
 <state>          The variable name that holds the user state to pass to the response functions. Defaults to response_state
-<method>         The method to wrap the code in, if specified.
+/nostatus        Suppress the status headers
 
 clasp /?
 
@@ -86,6 +86,8 @@ And example of using it is here: https://github.com/codewitch-honey-crisis/core2
 If either of these directives are present at least part of an HTTP header is generated (with or without the status line depending on `@status`)
 
 If `auto-headers` is enabled (which it is by default) and either headers or a status is specified then static content will get a `Content-Length` header and dynamic content will get `Transfer-Encoding: chunked` 
+
+Note that status headers will be unconditionally surpressed if the `nostatus` command line option is indicated.
 
 ## Static vs Dynamic content encoding
 

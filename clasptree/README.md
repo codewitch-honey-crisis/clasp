@@ -13,7 +13,7 @@ Generates dynamic ClASP content and static content from a directory tree
 Usage:
 
 clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /prefix <prefix> ]
-    [ /prologue <prologue> ] [ /epilogue <epilogue> ] [ /handlers <handlers> ] [ /index <index> ]
+    [ /prologue <prologue> ] [ /epilogue <epilogue> ] [ /handlers <handlers> ] [ /index <index> ] [ /nostatus ]
 
 <input>        The root directory of the site. Defaults to the current directory
 <output>       The output file to generate. Defaults to <stdout>
@@ -27,6 +27,7 @@ clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <sta
         None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based on
         <index>. Extended does this and also adds path/ trailing handlers
 <index>        Generate / default handlers for files matching this wildcard. Defaults to "index.*"
+/nostatus      Suppress the status headers
 
 clasptree /?
 
