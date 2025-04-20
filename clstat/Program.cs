@@ -17,8 +17,14 @@ namespace clstat
 #endif
 				using (var parsed = CliUtility.ParseAndSet(args, null, typeof(CLStat)))
 				{
-					CLStat.Run();
-				}
+					var code = CLStat.Run();
+					var ofn = CliUtility.GetFilename(CLStat.output);
+					if (!string.IsNullOrEmpty(ofn))
+					{
+						Console.Error.WriteLine($"Successfully wrote to {ofn}.");
+					}
+					return code;
+			}
 #if !DEBUG
 			}
 			catch (Exception ex)
@@ -28,7 +34,6 @@ namespace clstat
 			}
 #endif
 
-				return 0;
 			}
 		}
 	}

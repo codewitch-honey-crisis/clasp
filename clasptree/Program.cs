@@ -325,7 +325,10 @@ namespace clasptree
 				}
 				indout.Write($"#endif // {impl}\r\n");
 				indout.Flush();
-
+				var ofn = CliUtility.GetFilename(output);
+				if (!string.IsNullOrEmpty(ofn)) {
+					Console.Error.WriteLine($"Successfully wrote to {ofn}.");
+				}
 			}
 #if !DEBUG
 			}

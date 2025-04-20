@@ -14,7 +14,13 @@ namespace clasp
 #endif
 			using (var parsed = CliUtility.ParseAndSet(args, null, typeof(Clasp)))
 			{
-				return Clasp.Run();
+				var code = Clasp.Run();
+				var ofn = CliUtility.GetFilename(Clasp.output);
+				if (!string.IsNullOrEmpty(ofn))
+				{
+					Console.Error.WriteLine($"Successfully wrote to {ofn}.");
+				}
+				return code;
 			}
 #if !DEBUG
 			}
