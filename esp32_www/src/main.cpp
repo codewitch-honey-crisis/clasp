@@ -153,8 +153,8 @@ static char *httpd_url_encode(char *enc, size_t size, const char *s, const char 
     char* result = enc;
     if(table==NULL) table = enc_rfc3986;
     for (; *s; s++){
-        if (table[*s]) { 
-            *enc++ = table[*s];
+        if (table[(int)*s]) { 
+            *enc++ = table[(int)*s];
             --size;
         }
         else {
