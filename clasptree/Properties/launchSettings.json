@@ -15,6 +15,10 @@
     "win32 demo": {
       "commandName": "Project",
       "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\win32_www\\include\\httpd_content.h /prefix httpd_ /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended"
+    },
+    "posix demo": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\posix_www\\include\\httpd_content.h /prefix httpd_ /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended"
     }
   }
 }
