@@ -88,7 +88,6 @@ void httpd_content_favicon_ico(void* resp_arg) {
         0x7F, 0xBD, 0x3B, 0xC5, 0x67, 0xFC, 0x4F, 0x56, 0xB8, 0x97, 0xC5, 0x77, 0x94, 0xD6, 0x9B, 0xF8, 0x3B, 0x9E, 0xBB, 0x6F, 
         0xDC, 0xF2, 0x0A, 0xFF, 0x69, 0x3F, 0x00, 0x00, 0x00, 0xFF, 0xFF };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
-    free(resp_arg);
 }
 void httpd_content_index_clasp(void* resp_arg) {
     httpd_send_block("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: text"
@@ -159,7 +158,6 @@ void httpd_content_index_clasp(void* resp_arg) {
         "ument.getElementById(\"mySidebar\").style.display = \"block\";\r\n        }\r\n\r\n       "
         " function w3_close() {\r\n            document.getElementById(\"mySidebar\").style.d"
         "isplay = \"none\";\r\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
-    free(resp_arg);
 }
 void httpd_content_image_index_clasp(void* resp_arg) {
     httpd_send_block("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: text"
@@ -230,7 +228,6 @@ void httpd_content_image_index_clasp(void* resp_arg) {
         "ument.getElementById(\"mySidebar\").style.display = \"block\";\r\n        }\r\n\r\n       "
         " function w3_close() {\r\n            document.getElementById(\"mySidebar\").style.d"
         "isplay = \"none\";\r\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
-    free(resp_arg);
 }
 void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
     // HTTP/1.1 200 OK
@@ -798,7 +795,6 @@ void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
         0xD9, 0xAC, 0x3B, 0xBE, 0x3F, 0x9A, 0x77, 0x62, 0x2F, 0xAB, 0x9E, 0x01, 0xB7, 0x02, 0x75, 0xB2, 0x0F, 0x1C, 0x37, 0x4E, 
         0xCF, 0xAB, 0xFF, 0x07, 0x00, 0x00, 0xFF, 0xFF };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
-    free(resp_arg);
 }
 void httpd_content_style_w3_css(void* resp_arg) {
     // HTTP/1.1 200 OK
@@ -1075,6 +1071,5 @@ void httpd_content_style_w3_css(void* resp_arg) {
         0xA9, 0xA1, 0x95, 0xE2, 0x17, 0x8D, 0xBC, 0x00, 0xDF, 0x87, 0xAE, 0xBC, 0x60, 0x15, 0x22, 0xB7, 0x29, 0x68, 0xAE, 0xB5, 
         0x70, 0xFE, 0x17, 0x00, 0x00, 0xFF, 0xFF };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
-    free(resp_arg);
 }
 #endif // HTTPD_CONTENT_IMPLEMENTATION
