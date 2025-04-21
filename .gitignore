@@ -363,3 +363,4 @@ FodyWeavers.xsd
 /clasptree/www_content.h
 /esp32_www/.vscode
 /win32_www/build
+/posix_www/build
