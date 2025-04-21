@@ -211,15 +211,17 @@ namespace clasptree
 							{
 								dname = mname.Substring(0, li + 1);
 							}
-							if (dname.Length > 1)
+							string hext = null;
+							string hstd = $"/{dname}";
+							if(dname.Length>1)
 							{
-								if (handlers == HandlersMode.extended)
-								{
-									handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}content_{f.Key}"));
-								}
-								dname = dname.Substring(0, dname.Length - 1);
+								hext = "/" + dname.Substring(0, dname.Length - 1);
 							}
-							handlersList.Add(new HandlerEntry("/" + dname, "/" + System.Web.HttpUtility.UrlPathEncode(dname), $"{prefix}content_{f.Key}"));
+							handlersList.Add(new HandlerEntry(hstd, System.Web.HttpUtility.UrlPathEncode(hstd), $"{prefix}content_{f.Key}"));
+							if(hext!=null && handlers==HandlersMode.extended)
+							{
+								handlersList.Add(new HandlerEntry(hext, System.Web.HttpUtility.UrlPathEncode(hext), $"{prefix}content_{f.Key}"));
+							}
 						}
 						handlersList.Add(new HandlerEntry("/" + mname, "/" + System.Web.HttpUtility.UrlPathEncode(mname), $"{prefix}content_{f.Key}"));
 					}
