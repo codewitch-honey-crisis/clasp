@@ -8,6 +8,6 @@ ClASP: The C Language ASP and static generator suite
 
 See the README.md at each sub-project for usage
  
-The esp32_www project is an example PlatformIO project written for the ESP-IDF and ESP32s to demonstrate these facilities
-
-The win32_www project is mostly provided as a proof of this running on disparate platforms, but might be useful for a C/++ application that hosts its own internal web for the UI.
+- The esp32_www project is an example PlatformIO project written for the ESP-IDF and ESP32s to demonstrate these facilities
+- The win32_www project is mostly provided as a proof of this running on disparate platforms, but might be useful for a C/++ application that hosts its own internal web for the UI.
+- The posix_www project is an example project written for POSIX systems to demonstrate these facilities
