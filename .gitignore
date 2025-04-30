@@ -364,3 +364,4 @@ FodyWeavers.xsd
 /esp32_www/.vscode
 /win32_www/build
 /posix_www/build
+/esp32_www/data/wifi.txt
