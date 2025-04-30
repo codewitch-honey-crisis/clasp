@@ -167,36 +167,49 @@ static char *httpd_url_encode(char *enc, size_t size, const char *s, const char 
     }
     return result;
 }
-static const char* httpd_crack_query(const char* url_part, char* name,
-                                     char* value) {
-    if (url_part == nullptr || !*url_part) return nullptr;
-    const char start = *url_part;
-    if (start == '&' || start == '?') {
-        ++url_part;
-    }
-    size_t i = 0;
-    char* name_cur = name;
-    while (*url_part && *url_part != '=') {
-        if (i < 64) {
-            *name_cur++ = *url_part;
+static const char* httpd_crack_query(const char* next_query_part, char* out_name, size_t name_size,
+                                     char* out_value, size_t value_size) {
+        if (!*next_query_part) return NULL;
+
+        const char start = *next_query_part;
+        if (start == '&' || start == '?') {
+            ++next_query_part;
         }
-        ++url_part;
-        ++i;
-    }
-    *name_cur = '\0';
-    if (!*url_part) {
-        *value = '\0';
-        return url_part;
-    }
-    ++url_part;
-    i = 0;
-    char* value_cur = value;
-    while (*url_part && *url_part != '&' && i < 64) {
-        *value_cur++ = *url_part++;
-        ++i;
-    }
-    *value_cur = '\0';
-    return url_part;
+        size_t i = 0;
+        char* name_cur = out_name;
+        while (*next_query_part && *next_query_part != '=' &&
+                *next_query_part != '&' && *next_query_part != ';') {
+            if (i < name_size) {
+                *name_cur++ = *next_query_part;
+            }
+            ++next_query_part;
+            ++i;
+        }
+        if (name_size) {
+            *name_cur = '\0';
+        }
+        if (!*next_query_part || *next_query_part == '&' ||
+            *next_query_part == ';') {
+            if (value_size) {
+                *out_value = '\0';
+            }
+            return next_query_part;
+        }
+        ++next_query_part;
+        i = 0;
+        char* value_cur = out_value;
+        while (*next_query_part && *next_query_part != '&' &&
+                *next_query_part != ';') {
+            if (i < value_size) {
+                *value_cur++ = *next_query_part;
+            }
+            ++next_query_part;
+            ++i;
+        }
+        if (value_size) {
+            *value_cur = '\0';
+        }
+        return next_query_part;
 }
 static void httpd_parse_url(const char* url) {
     const char* query = strchr(url, '?');
@@ -204,7 +217,7 @@ static void httpd_parse_url(const char* url) {
     char value[64];
     if (query != nullptr) {
         while (1) {
-            query = httpd_crack_query(query, name, value);
+            query = httpd_crack_query(query, name, sizeof(name), value, sizeof(value));
             if (!query) {
                 break;
             }
