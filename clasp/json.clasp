@@ -1,0 +1,5 @@
+﻿<%@status code="200" text="OK"%>
+<%@header name="Content-Type" value="application/json"%>{"contacts": [<%
+for(size_t i = 0;i<contacts_size;++i) {%>
+  {"name":"<%=contacts[i].name%>", "age":<%=contacts[i].age%>, "email": "<%=contacts[i].email%>"}<%
+}%>]}	
