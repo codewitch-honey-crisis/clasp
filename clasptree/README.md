@@ -14,20 +14,22 @@ Usage:
 
 clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /prefix <prefix> ]
     [ /prologue <prologue> ] [ /epilogue <epilogue> ] [ /handlers <handlers> ] [ /index <index> ] [ /nostatus ]
+    [ /handlerfsm ]
 
-<input>        The root directory of the site. Defaults to the current directory
-<output>       The output file to generate. Defaults to <stdout>
-<block>        The function call to send a literal block to the client. Defaults to response_block
-<expr>         The function call to send an expression to the client. Defaults to response_expr
-<state>        The variable name that holds the user state to pass to the response functions. Defaults to response_state
-<prefix>       The method prefix to use, if specified.
-<prologue>     The file to insert into each method before any code
-<epilogue>     The file to insert into each method after any code
-<handlers>     Indicated wither to generate no handler entries (none), default entries (@default) or extended (extended) handlers.
-        None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based on
-        <index>. Extended does this and also adds path/ trailing handlers
-<index>        Generate / default handlers for files matching this wildcard. Defaults to "index.*"
-/nostatus      Suppress the status headers
+<input>         The root directory of the site. Defaults to the current directory
+<output>        The output file to generate. Defaults to <stdout>
+<block>         The function call to send a literal block to the client. Defaults to response_block
+<expr>          The function call to send an expression to the client. Defaults to response_expr
+<state>         The variable name that holds the user state to pass to the response functions. Defaults to response_state
+<prefix>        The method prefix to use, if specified.
+<prologue>      The file to insert into each method before any code
+<epilogue>      The file to insert into each method after any code
+<handlers>      Indicated wither to generate no handler entries (none), default entries (@default) or extended (extended)
+        handlers. None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based
+        on <index>. Extended does this and also adds path/ trailing handlers
+<index>         Generate / default handlers for files matching this wildcard. Defaults to "index.*"
+/nostatus       Suppress the status headers
+/handlerfsm     Generate a finite state machine that can be used for matching headers
 
 clasptree /?
 
@@ -36,7 +38,7 @@ clasptree /?
 
 Consider the following
 ```
-clasptree www esp32_www\include\httpd_content.h /prefix httpd_ /epilogue httpd_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr
+clasptree ..\..\..\www ..\..\..\..\esp32_www\include\httpd_content.h /prefix httpd_ /epilogue ..\..\..\httpd_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /handlerfsm
 ```
 This will take all the content in a folder called www, and generate a header file called httpd_content.h with it.
 It specifies the prefix to use for the generated symbols, an epilogue of code to append in each method, the argument and the methods used to send data.
@@ -47,11 +49,20 @@ To understand the details of how it works see the READMEs for CLASP and ClStat, 
 - For .h files, they are copied into the input directory in a mirrored tree, and an `#include` is added in the generated code.
 - For other files, it is potentially compressed and embedded as static.
 
+The options in the command line above, in order, 
+
+1. apply a prefix `httpd_`to all generated functions, types and variables
+2. add the code from `httpd_epilogue.h` to the end of each handler function
+3. names the user defined state variable `resp_arg_`
+4. indicates the name of the send block function is `httpd_send_block`
+5. indicates the name of the send expression function(s) is `httpd_send_expr`
+6. Indicates that for `index.*` files, an additional entry without the trailing path `/` should be added. For example `/foo/index.clasp` will create 3 handlers instead of 2. `/foo/index.clasp` and `/foo/` will be added, and with the extended option `/foo` will also be added.
+6. generates an `int httpd_response_handlers_match(const char* uri)` function that can be used to efficiently match URIs to a specific response handler entry.
 
 In the Visual Studio demo for clasptree, this command from above generates this content based on the contents of www:
 
 ```cpp
-// Generated with clasptree
+ // Generated with clasptree
 // To use this file, define HTTPD_CONTENT_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.
 #ifndef HTTPD_CONTENT_H
 #define HTTPD_CONTENT_H
@@ -73,6 +84,10 @@ void httpd_content_index_clasp(void* resp_arg);
 void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg);
 // ./style/w3.css
 void httpd_content_style_w3_css(void* resp_arg);
+/// @brief Matches an URL to one of the response handler entries
+/// @param uri The URL to match
+/// @return The index of the response handler entry, or -1 if no match
+int httpd_response_handler_match(const char* uri);
 
 #ifdef __cplusplus
 }
@@ -89,6 +104,74 @@ httpd_response_handler_t httpd_response_handlers[5] = {
     { "/index.clasp", "/index.clasp", httpd_content_index_clasp },
     { "/style/w3.css", "/style/w3.css", httpd_content_style_w3_css }
 };
+int httpd_response_handler_match(const char* uri) {
+    static const int16_t fsm_data[] = {
+        -1, 0x0001, 0x0006, 0x0001, 0x002F, 0x002F, 0x0000, 0x0003, 0x0014, 0x0001, 0x0066, 0x0066, 0x0052, 0x0001, 0x0069, 0x0069, 0x011A, 0x0001, 0x0073, 0x0073, 
+        -1, 0x0001, 0x001A, 0x0001, 0x0061, 0x0061, -1, 0x0001, 0x0020, 0x0001, 0x0076, 0x0076, -1, 0x0001, 0x0026, 0x0001, 0x0069, 0x0069, -1, 0x0001, 
+        0x002C, 0x0001, 0x0063, 0x0063, -1, 0x0001, 0x0032, 0x0001, 0x006F, 0x006F, -1, 0x0001, 0x0038, 0x0001, 0x006E, 0x006E, -1, 0x0001, 0x003E, 0x0001, 
+     ...};
+   
+    unsigned long long adv = 0;
+    int tlen;
+    int16_t tto;
+    int16_t prlen;
+    int16_t pmin;
+    int16_t pmax;
+    int i, j;
+    char ch;
+    int16_t state = 0;
+    int16_t acc = -1;
+    int done;
+    const char* endsz = strchr(uri, '?');
+    size_t urilen;
+    bool result;
+    if (endsz) {
+    	urilen = endsz - uri + 1;
+    }
+    else {
+    	urilen = strlen(uri);
+    }
+    ch = adv >= urilen ? -1 : uri[adv++];
+    while (ch != -1) {
+    	result = false;
+    	acc = -1;
+    	done = 0;
+    	while (!done) {
+    	start_dfa:
+    		done = 1;
+    		acc = fsm_data[state++];
+    		tlen = fsm_data[state++];
+    		for (i = 0; i < tlen; ++i) {
+    			tto = fsm_data[state++];
+    			prlen = fsm_data[state++];
+    			for (j = 0; j < prlen; ++j) {
+    				pmin = fsm_data[state++];
+    				pmax = fsm_data[state++];
+    				if (ch < pmin) {
+    					break;
+    				}
+    				if (ch <= pmax) {
+    					result = true;
+    					ch = adv >= urilen ? -1 : uri[adv++];
+    					state = tto;
+    					done = 0;
+    					goto start_dfa;
+    				}
+    			}
+    		}
+    		if (acc != -1 && result) {
+    			if (adv==urilen) {
+    				return (int)acc;
+    			}
+    			return -1;
+    		}
+    		ch = adv >= urilen ? -1 : uri[adv++];
+    		state = 0;
+    	}
+    }
+    return -1;
+    
+}
 void httpd_content_favicon_ico(void* resp_arg) {
     // HTTP/1.1 200 OK
     // Content-Type: image/x-icon
@@ -97,37 +180,38 @@ void httpd_content_favicon_ico(void* resp_arg) {
     // 
     static const unsigned char http_response_data[] = {
         0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
-        0x74, 0x65, 0x6E, 0x74, ... };
-
+        ... };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
 void httpd_content_index_clasp(void* resp_arg) {
-    httpd_send_block("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\nC5\r\n<!DO"
-        "CTYPE html>\r\n<html>\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewpor"
-        "t\" content=\"width=device-width, initial-scale=1\">\r\n    <link rel=\"stylesheet\" hr"
-        "ef=\"./style/w3.css\">\r\n    <title>\r\n", 275, resp_arg);
+    httpd_send_block("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: text"
+        "/html\r\n\r\nC5\r\n<!DOCTYPE html>\r\n<html>\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <m"
+        "eta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n    <link re"
+        "l=\"stylesheet\" href=\"./style/w3.css\">\r\n    <title>\r\n", 275, resp_arg);
     httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("3\r\n - \r\n", 8, resp_arg);
     httpd_send_expr(show_title, resp_arg);
-    httpd_send_block("3FB\r\n</title>\r\n    <style>\r\n        .w3-bar-block .w3-bar-item {\r\n            pa"
-        "dding: 20px\r\n        }\r\n\r\n        body {\r\n            font-family: 'Segoe UI', T"
-        "ahoma, Geneva, Verdana, sans-serif;\r\n        }\r\n\r\n        h3 {\r\n            font"
-        "-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Uni"
-        "code', Geneva, Verdana, sans-serif;\r\n            font-size: larger;\r\n        }\r\n"
-        "\r\n        .stars {\r\n            color: orange;\r\n        }\r\n        video {\r\n    "
-        "        object-fit: contain;\r\n            max-width:1200px;\r\n            margin:"
-        " auto;\r\n        }\r\n    </style>\r\n</head>\r\n<body>\r\n    <!-- Sidebar (hidden by de"
-        "fault) -->\r\n    <nav class=\"w3-sidebar w3-bar-block w3-card w3-top w3-xlarge w3-"
-        "animate-left\" style=\"display: none; z-index: 2; width: 40%; min-width: 300px\" id"
-        "=\"mySidebar\">\r\n        <a href=\"https://github.com/codewitch-honey-crisis/clasp\""
-        " onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">ClASP at GitHub</a>\r\n       "
-        " <a href=\"/\" onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">\r\n", 1026, resp_arg);
+    httpd_send_block("3FB\r\n</title>\r\n    <style>\r\n        .w3-bar-block .w3-bar-item "
+        "{\r\n            padding: 20px\r\n        }\r\n\r\n        body {\r\n            font-fami"
+        "ly: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\r\n        }\r\n\r\n        h3 {\r"
+        "\n            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',"
+        " 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;\r\n            font-size: lar"
+        "ger;\r\n        }\r\n\r\n        .stars {\r\n            color: orange;\r\n        }\r\n    "
+        "    video {\r\n            object-fit: contain;\r\n            max-width:1200px;\r\n  "
+        "          margin: auto;\r\n        }\r\n    </style>\r\n</head>\r\n<body>\r\n    <!-- Side"
+        "bar (hidden by default) -->\r\n    <nav class=\"w3-sidebar w3-bar-block w3-card w3-"
+        "top w3-xlarge w3-animate-left\" style=\"display: none; z-index: 2; width: 40%; min"
+        "-width: 300px\" id=\"mySidebar\">\r\n        <a href=\"https://github.com/codewitch-ho"
+        "ney-crisis/clasp\" onclick=\"w3_close()\" class=\"w3-bar-item w3-button\">ClASP at Gi"
+        "tHub</a>\r\n        <a href=\"/\" onclick=\"w3_close()\" class=\"w3-bar-item w3-button\""
+        ">\r\n", 1026, resp_arg);
     httpd_send_expr(episode_title, resp_arg);
-    httpd_send_block("12C\r\n</a>\r\n    </nav>\r\n    <div class=\"w3-top\">\r\n        <div class=\"w3-white w3"
-        "-xlarge\" style=\"max-width: 1200px; margin: auto\">\r\n            <div class=\"w3-bu"
-        "tton w3-padding-16 w3-left\" onclick=\"w3_open()\">\xE2\x98\xB0</div>\r\n            <div clas"
-        "s=\"w3-right w3-padding-16\">\r\n                <span class=\"stars\">\r\n", 307, resp_arg);
+    httpd_send_block("12C\r\n</a>\r\n    </nav>\r\n    <div class=\"w3-top\">\r\n        <div c"
+        "lass=\"w3-white w3-xlarge\" style=\"max-width: 1200px; margin: auto\">\r\n            "
+        "<div class=\"w3-button w3-padding-16 w3-left\" onclick=\"w3_open()\">\xE2\x98\xB0</div>\r\n    "
+        "        <div class=\"w3-right w3-padding-16\">\r\n                <span class=\"stars"
+        "\">\r\n", 307, resp_arg);
     
     int r = round(example_star_rating);
     int i;
@@ -139,13 +223,14 @@ void httpd_content_index_clasp(void* resp_arg) {
     }
     httpd_send_block("D\r\n</span><span>\r\n", 18, resp_arg);
     httpd_send_expr(example_star_rating, resp_arg);
-    httpd_send_block("4E\r\n</span>\r\n            </div>\r\n            <div class=\"w3-center w3-padding-16"
-        "\">\r\n", 84, resp_arg);
+    httpd_send_block("4E\r\n</span>\r\n            </div>\r\n            <div class=\"w3-cen"
+        "ter w3-padding-16\">\r\n", 84, resp_arg);
     httpd_send_expr(episode_title, resp_arg);
     httpd_send_block("3\r\n - \r\n", 8, resp_arg);
     httpd_send_expr(show_title, resp_arg);
-    httpd_send_block("8F\r\n</div>\r\n        </div>\r\n    </div>\r\n    <div class=\"w3-main w3-content w3-pa"
-        "dding\" style=\"max-width: 1200px; margin-top: 100px\">\r\n        <div>\r\n", 149, resp_arg);
+    httpd_send_block("8F\r\n</div>\r\n        </div>\r\n    </div>\r\n    <div class=\"w3-main"
+        " w3-content w3-padding\" style=\"max-width: 1200px; margin-top: 100px\">\r\n        <"
+        "div>\r\n", 149, resp_arg);
     char tmp[256]={0};
     httpd_send_block("19\r\n\r\n            <img alt=\"S\r\n", 31, resp_arg);
     httpd_send_expr(season_number, resp_arg);
@@ -159,14 +244,15 @@ void httpd_content_index_clasp(void* resp_arg) {
     httpd_send_expr(episode_number, resp_arg);
     httpd_send_block("3\r\n%20\r\n", 8, resp_arg);
     httpd_send_expr(httpd_url_encode(tmp,sizeof(tmp),episode_title,nullptr), resp_arg);
-    httpd_send_block("8E\r\n.jpg\" /> \r\n        </div>\r\n                 \r\n        <div class=\"w3-white w"
-        "3-large\" style=\"max-width: 1200px; margin: auto\">\r\n            <p>\r\n", 148, resp_arg);
+    httpd_send_block("8E\r\n.jpg\" /> \r\n        </div>\r\n                 \r\n        <div "
+        "class=\"w3-white w3-large\" style=\"max-width: 1200px; margin: auto\">\r\n            "
+        "<p>\r\n", 148, resp_arg);
     httpd_send_expr(episode_description, resp_arg);
-    httpd_send_block("166\r\n</p>\r\n        </div>\r\n    </div>\r\n    <script>\r\n        // Script to open a"
-        "nd close sidebar\r\n        function w3_open() {\r\n            document.getElementB"
-        "yId(\"mySidebar\").style.display = \"block\";\r\n        }\r\n\r\n        function w3_clos"
-        "e() {\r\n            document.getElementById(\"mySidebar\").style.display = \"none\";\r"
-        "\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
+    httpd_send_block("166\r\n</p>\r\n        </div>\r\n    </div>\r\n    <script>\r\n        //"
+        " Script to open and close sidebar\r\n        function w3_open() {\r\n            doc"
+        "ument.getElementById(\"mySidebar\").style.display = \"block\";\r\n        }\r\n\r\n       "
+        " function w3_close() {\r\n            document.getElementById(\"mySidebar\").style.d"
+        "isplay = \"none\";\r\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
     free(resp_arg);
 }
 void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
@@ -177,8 +263,7 @@ void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
     // 
     static const unsigned char http_response_data[] = {
         0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
-        0x74, 0x65, 0x6E, 0x74, 0x2D, 0x54, 0x79, 0x70, 0x65, 0x3A, 0x20, 0x69, 0x6D, 0x61, 0x67, 0x65, 0x2F, 0x6A, 0x70, 0x65, 
-        0x67, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x2D, 0x45, 0x6E, ... };
+        ... };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
@@ -190,11 +275,12 @@ void httpd_content_style_w3_css(void* resp_arg) {
     // 
     static const unsigned char http_response_data[] = {
         0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
-        0x74, 0x65, 0x6E, 0x74, 0x2D, 0x54, 0x79, 0x70, 0x65, 0x3A, 0x20, 0x74, ... };
+        ... };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     free(resp_arg);
 }
 #endif // HTTPD_CONTENT_IMPLEMENTATION
+
 ```
 (some of the binary data omitted from above)
 

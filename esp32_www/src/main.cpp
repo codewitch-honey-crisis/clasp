@@ -225,6 +225,10 @@ static void httpd_parse_url(const char* url) {
         }
     }
 }
+static bool httpd_match(const char* cmp, const char* uri, size_t len) {
+    return -1<httpd_response_handler_match(uri);
+    
+}
 static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
                                const char* buffer, size_t buffer_len) {
     char buf[64];
@@ -274,18 +278,24 @@ static void httpd_send_expr(const char* expr, void* arg) {
     httpd_send_chunked(resp_arg, expr, strlen(expr));
 }
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
+    //httpd_parse_url(req->uri);
+    int h = httpd_response_handler_match(req->uri);
+    if(h==-1) {
+        //
+        return ESP_FAIL;
+    }
     httpd_async_resp_arg* resp_arg =
         (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
     if (resp_arg == nullptr) {
         return ESP_ERR_NO_MEM;
     }
-    httpd_parse_url(req->uri);
     resp_arg->hd = req->handle;
     resp_arg->fd = httpd_req_to_sockfd(req);
     if (resp_arg->fd < 0) {
+        free(resp_arg);
         return ESP_FAIL;
     }
-    httpd_queue_work(req->handle, (httpd_work_fn_t)req->user_ctx, resp_arg);
+    httpd_queue_work(req->handle, (httpd_work_fn_t)httpd_response_handlers[h].handler, resp_arg);
     return ESP_OK;
 }
 static void httpd_init() {
@@ -299,20 +309,25 @@ static void httpd_init() {
         enc_html5[i] = isalnum( i) || i == '*' || i == '-' || i == '.' || i == '_' ? i : (i == ' ') ? '+' : 0;
     }
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = HTTPD_RESPONSE_HANDLER_COUNT;
+    config.max_uri_handlers = 2;
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
+    config.uri_match_fn = httpd_match;    
     ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
-
-    for (size_t i = 0; i < HTTPD_RESPONSE_HANDLER_COUNT; ++i) {
-        printf("Registering %s\n", httpd_response_handlers[i].path);
-        httpd_uri_t handler = {
-            .uri = httpd_response_handlers[i].path_encoded,
-            .method = HTTP_GET,
-            .handler = httpd_request_handler,
-            .user_ctx = (void*)httpd_response_handlers[i].handler};
-        ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
-    }
+    httpd_uri_t handler = {
+        .uri = "/",
+        .method = HTTP_GET,
+        .handler = httpd_request_handler,
+        .user_ctx = nullptr
+    };
+    ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
+    handler = {
+        .uri = "/",
+        .method = HTTP_POST,
+        .handler = httpd_request_handler,
+        .user_ctx = nullptr
+    };
+    ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
 }
 static void httpd_end() {
     if (httpd_handle == nullptr) {

@@ -1,8 +1,10 @@
 ﻿using Cli;
-
+using VisualFA;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Xml.Linq;
+using System.Drawing;
+using System.Reflection;
 namespace clasptree
 {
 	enum HandlersMode
@@ -33,9 +35,10 @@ namespace clasptree
 		static HandlersMode handlers = HandlersMode.@default;
 		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard. Defaults to \"index.*\"")]
 		static string index = "index.*";
-		[CmdArg(Name = "nostatus", Optional = true, Description = "Suppress the status headers")]
+		[CmdArg(Name = "nostatus", ElementName ="nostatus", Optional = true, Description = "Suppress the status headers")]
 		public static bool nostatus = false;
-
+		[CmdArg(Name = "handlerfsm", ElementName = "handlerfsm", Optional = true, Description = "Generate a finite state machine that can be used for matching headers")]
+		public static bool handlerfsm = false;
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		static bool help = false;
 		static HashSet<string> names = new HashSet<string>();
@@ -99,6 +102,7 @@ namespace clasptree
 				return obj.FullName.GetHashCode();
 			}
 		}
+		
 		struct HandlerEntry
 		{
 			public string Path;
@@ -110,6 +114,89 @@ namespace clasptree
 				EncodedPath = encodedPath;
 				Method = method;
 			}
+		}
+		static int FsmWidthBytes(int[] table)
+		{
+			int width = 1;
+			for (int i = 0; i < table.Length; ++i)
+			{
+				var entry = table[i];
+				if (entry > 32767 || entry < -32768)
+				{
+					return 4;
+				}
+				else if (entry > 127 || entry < -128)
+				{
+					width = 2;
+				}
+			}
+			return width;
+		}
+		static string FsmWidthToType(int width)
+		{
+			return $"uint{width * 8}_t";
+		}
+		static string FsmWidthToSignedType(int width)
+		{
+			return $"int{width * 8}_t";
+		}
+		static string FsmReplaceTypes(string s)
+		{
+			s = s.Replace("UINT8", "uint8_t");
+			s = s.Replace("INT8", "int8_t");
+			s = s.Replace("UINT16", "uint16_t");
+			s = s.Replace("INT16", "int16_t");
+			s = s.Replace("UINT32", "uint32_t");
+			s = s.Replace("INT32", "int32_t");
+			return s;
+		}
+		static void EmitFsm(List<HandlerEntry> handlers, TextWriter output)
+		{
+			FA[] hfas = new FA[handlers.Count];
+			for(var i = 0;i<handlers.Count;++i)
+			{
+				var h = handlers[i];
+				hfas[i] = FA.Literal(h.EncodedPath, i);
+			}
+			var lexer = FA.ToLexer(hfas, true);
+			int[] fsmData = lexer.ToArray();
+			var width = FsmWidthBytes(fsmData);
+			output.Write($"static const {FsmWidthToSignedType(width)} fsm_data[] = {{");
+			
+			for (var i = 0; i < fsmData.Length; ++i)
+			{
+				if ((i % 20) == 0)
+				{
+					output.Write("\r\n");
+					if (i < fsmData.Length - 1)
+					{
+						output.Write("    ");
+					}
+				}
+				string entry;
+				if (fsmData[i] == -1)
+				{
+					entry = "-1";
+				}
+				else
+				{
+					entry = "0x" + fsmData[i].ToString("X" + (width * 2).ToString());
+				}
+				if (i < fsmData.Length- 1)
+				{
+					entry += ", ";
+				}
+				output.Write(entry);
+			}
+			output.Write("};\r\n\r\n");
+			var stm = Assembly.GetExecutingAssembly().GetManifestResourceStream("clasptree.runner.c");
+			TextReader tr = new StreamReader(stm);
+			var s = tr.ReadToEnd();
+			s = s.Replace("TYPE", width == 4 ? "INT32" : width == 1 ? "INT8" : "INT16");
+			s = FsmReplaceTypes(s);
+			output.Write(s);
+
+
 		}
 		static int Main(string[] args)
 		{
@@ -128,7 +215,11 @@ namespace clasptree
 				{
 					throw new ArgumentException($"{CliUtility.SwitchPrefix}<handlers> \"none\" cannot be specified with {CliUtility.SwitchPrefix}index");
 				}
-				if (prefix == null) prefix = "";
+				if (handlers == HandlersMode.none && handlerfsm)
+				{
+					throw new ArgumentException($"{CliUtility.SwitchPrefix}<handlers> \"none\" cannot be specified with {CliUtility.SwitchPrefix}handlersfsm");
+				}
+					if (prefix == null) prefix = "";
 				var prolStr = prologue != null ? prologue.ReadToEnd() : "";
 				var epilStr = epilogue != null ? epilogue.ReadToEnd() : "";
 				var fia = input.GetFiles("*.*", SearchOption.AllDirectories);
@@ -246,6 +337,11 @@ namespace clasptree
 					indout.Write($"// ./{mname}\r\n");
 					indout.Write($"void {prefix}content_{f.Key}(void* {state});\r\n");
 				}
+				if(handlerfsm)
+				{
+					indout.Write("// matches an url to a response handler index\r\n");
+					indout.Write($"int {prefix}response_handler_match(const char* uri);\r\n");
+				}
 				indout.Write("\r\n");
 				indout.Write("#ifdef __cplusplus\r\n");
 				indout.Write("}\r\n");
@@ -274,6 +370,15 @@ namespace clasptree
 						}
 					}
 					indout.Write("};\r\n");
+				}
+				if (handlerfsm)
+				{
+					indout.Write("/// @brief Matches an URL to one of the response handler entries\r\n/// @param uri The URL to match\r\n/// @return The index of the response handler entry, or -1 if no match\r\n");
+					indout.Write($"int {prefix}response_handler_match(const char* uri) {{\r\n");
+					indout.IndentLevel++;
+					EmitFsm(handlersList, indout);
+					indout.IndentLevel--;
+					indout.Write("}\r\n");
 				}
 				foreach (var f in files)
 				{

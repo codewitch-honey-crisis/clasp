@@ -27,7 +27,6 @@ namespace clasp
 		public static bool nostatus = false;
 		[CmdArg(Name = "headers", Optional =true,ElementName ="headers", Description ="Indicates which headers should be generated (auto, none or required). Defaults to auto")]
 		public static ClaspHeaderMode headers = ClaspHeaderMode.auto;
-
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		public static bool help = false;
 		
