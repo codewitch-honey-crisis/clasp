@@ -22,7 +22,7 @@ void httpd_content_index_clasp(void* resp_arg);
 void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg);
 // ./style/w3.css
 void httpd_content_style_w3_css(void* resp_arg);
-/// @brief Matches an URL to one of the response handler entries
+/// @brief Matches a path to one of the response handler entries
 /// @param path_and_query The path to match which can include the query string (ignored)
 /// @return The index of the response handler entry, or -1 if no match
 int httpd_response_handler_match(const char* path_and_query);
