@@ -1,6 +1,5 @@
 ﻿using Cli;
 
-using clstat;
 
 using System;
 using System.IO.Compression;
