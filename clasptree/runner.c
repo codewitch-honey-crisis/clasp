@@ -10,7 +10,7 @@ TYPE state = 0;
 TYPE acc = -1;
 int done;
 bool result;
-ch = (uri[adv]=='\0'||uri[adv]=='?') ? -1 : uri[adv++];
+ch = (path_and_query[adv]=='\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
 while (ch != -1) {
 	result = false;
 	acc = -1;
@@ -31,7 +31,7 @@ while (ch != -1) {
 				}
 				if (ch <= pmax) {
 					result = true;
-					ch = (uri[adv] == '\0' || uri[adv] == '?') ? -1 : uri[adv++];
+					ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
 					state = tto;
 					done = 0;
 					goto start_dfa;
@@ -39,12 +39,12 @@ while (ch != -1) {
 			}
 		}
 		if (acc != -1 && result) {
-			if (uri[adv]=='\0' || uri[adv]=='?') {
+			if (path_and_query[adv]=='\0' || path_and_query[adv]=='?') {
 				return (int)acc;
 			}
 			return -1;
 		}
-		ch = (uri[adv] == '\0' || uri[adv] == '?') ? -1 : uri[adv++];
+		ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
 		state = 0;
 	}
 }

@@ -343,8 +343,8 @@ namespace clasptree
 				}
 				if(handlerfsm)
 				{
-					indout.Write("// matches an url to a response handler index\r\n");
-					indout.Write($"int {prefix}response_handler_match(const char* uri);\r\n");
+					indout.Write("/// @brief Matches an URL to one of the response handler entries\r\n/// @param path_and_query The path to match which can include the query string (ignored)\r\n/// @return The index of the response handler entry, or -1 if no match\r\n");
+					indout.Write($"int {prefix}response_handler_match(const char* path_and_query);\r\n");
 				}
 				indout.Write("\r\n");
 				indout.Write("#ifdef __cplusplus\r\n");
@@ -377,8 +377,8 @@ namespace clasptree
 				}
 				if (handlerfsm)
 				{
-					indout.Write("/// @brief Matches an URL to one of the response handler entries\r\n/// @param uri The URL to match\r\n/// @return The index of the response handler entry, or -1 if no match\r\n");
-					indout.Write($"int {prefix}response_handler_match(const char* uri) {{\r\n");
+					indout.Write("// matches a path to a response handler index\r\n");
+					indout.Write($"int {prefix}response_handler_match(const char* path_and_query) {{\r\n");
 					indout.IndentLevel++;
 					EmitFsm(handlersList, indout);
 					indout.IndentLevel--;

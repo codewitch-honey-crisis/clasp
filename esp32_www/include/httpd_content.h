@@ -22,8 +22,10 @@ void httpd_content_index_clasp(void* resp_arg);
 void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg);
 // ./style/w3.css
 void httpd_content_style_w3_css(void* resp_arg);
-// matches an url to a response handler index
-int httpd_response_handler_match(const char* uri);
+/// @brief Matches an URL to one of the response handler entries
+/// @param path_and_query The path to match which can include the query string (ignored)
+/// @return The index of the response handler entry, or -1 if no match
+int httpd_response_handler_match(const char* path_and_query);
 
 #ifdef __cplusplus
 }
@@ -40,10 +42,8 @@ httpd_response_handler_t httpd_response_handlers[5] = {
     { "/index.clasp", "/index.clasp", httpd_content_index_clasp },
     { "/style/w3.css", "/style/w3.css", httpd_content_style_w3_css }
 };
-/// @brief Matches an URL to one of the response handler entries
-/// @param uri The URL to match
-/// @return The index of the response handler entry, or -1 if no match
-int httpd_response_handler_match(const char* uri) {
+// matches a path to a response handler index
+int httpd_response_handler_match(const char* path_and_query) {
     static const int16_t fsm_data[] = {
         -1, 0x0001, 0x0006, 0x0001, 0x002F, 0x002F, 0x0000, 0x0003, 0x0014, 0x0001, 0x0066, 0x0066, 0x0052, 0x0001, 0x0069, 0x0069, 0x011A, 0x0001, 0x0073, 0x0073, 
         -1, 0x0001, 0x001A, 0x0001, 0x0061, 0x0061, -1, 0x0001, 0x0020, 0x0001, 0x0076, 0x0076, -1, 0x0001, 0x0026, 0x0001, 0x0069, 0x0069, -1, 0x0001, 
@@ -76,7 +76,7 @@ int httpd_response_handler_match(const char* uri) {
     int16_t acc = -1;
     int done;
     bool result;
-    ch = (uri[adv]=='\0'||uri[adv]=='?') ? -1 : uri[adv++];
+    ch = (path_and_query[adv]=='\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
     while (ch != -1) {
     	result = false;
     	acc = -1;
@@ -97,7 +97,7 @@ int httpd_response_handler_match(const char* uri) {
     				}
     				if (ch <= pmax) {
     					result = true;
-    					ch = (uri[adv] == '\0' || uri[adv] == '?') ? -1 : uri[adv++];
+    					ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
     					state = tto;
     					done = 0;
     					goto start_dfa;
@@ -105,12 +105,12 @@ int httpd_response_handler_match(const char* uri) {
     			}
     		}
     		if (acc != -1 && result) {
-    			if (uri[adv]=='\0' || uri[adv]=='?') {
+    			if (path_and_query[adv]=='\0' || path_and_query[adv]=='?') {
     				return (int)acc;
     			}
     			return -1;
     		}
-    		ch = (uri[adv] == '\0' || uri[adv] == '?') ? -1 : uri[adv++];
+    		ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
     		state = 0;
     	}
     }
