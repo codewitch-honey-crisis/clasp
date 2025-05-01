@@ -226,7 +226,7 @@ static void httpd_parse_url(const char* url) {
     }
 }
 static bool httpd_match(const char* cmp, const char* uri, size_t len) {
-    return -1<httpd_response_handler_match(uri);
+    return true;
     
 }
 static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
@@ -280,10 +280,6 @@ static void httpd_send_expr(const char* expr, void* arg) {
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
     //httpd_parse_url(req->uri);
     int h = httpd_response_handler_match(req->uri);
-    if(h==-1) {
-        //
-        return ESP_FAIL;
-    }
     httpd_async_resp_arg* resp_arg =
         (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
     if (resp_arg == nullptr) {
@@ -295,7 +291,14 @@ static esp_err_t httpd_request_handler(httpd_req_t* req) {
         free(resp_arg);
         return ESP_FAIL;
     }
-    httpd_queue_work(req->handle, (httpd_work_fn_t)httpd_response_handlers[h].handler, resp_arg);
+    httpd_work_fn_t fn;
+    if(h==-1) {
+        fn = httpd_content_404_clasp;
+    } else {
+        fn = (httpd_work_fn_t)httpd_response_handlers[h].handler;
+    }
+    
+    httpd_queue_work(req->handle, fn, resp_arg);
     return ESP_OK;
 }
 static void httpd_init() {
