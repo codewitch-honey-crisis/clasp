@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Text;
 namespace clstat
 {
-	internal enum CompressionType
+	internal enum CLStatCompressionType
 	{
 		none = 0,
 		gzip = 1,
@@ -26,7 +26,7 @@ namespace clstat
 		[CmdArg("type", Optional = true, ElementName = "type", Description = "Indicates the content type of the data.")]
 		public static string type = null;
 		[CmdArg("compress", Optional = true, ElementName = "compress", Description = "Indicates the type of compression to use: none, gzip, deflate, or auto.")]
-		public static CompressionType compress = CompressionType.auto;
+		public static CLStatCompressionType compress = CLStatCompressionType.auto;
 		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
 		public static string block = "response_block";
 		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
@@ -50,10 +50,10 @@ namespace clstat
 				var enc = "";
 				switch (compress)
 				{
-					case CompressionType.deflate:
+					case CLStatCompressionType.deflate:
 						enc = "Content-Encoding: deflate\r\n";
 						break;
-					case CompressionType.gzip:
+					case CLStatCompressionType.gzip:
 						enc = "Content-Encoding: gzip\r\n";
 						break;
 				}
@@ -95,7 +95,7 @@ namespace clstat
 		}
 		public static bool IsText()
 		{
-			if (compress != CompressionType.none)
+			if (compress != CLStatCompressionType.none)
 			{
 				return false;
 			}
@@ -289,7 +289,7 @@ namespace clstat
 		}
 		public static Stream ProcessCompression()
 		{
-			if (compress == CompressionType.auto)
+			if (compress == CLStatCompressionType.auto)
 			{
 				var defl = new MemoryStream();
 				var gzip = new MemoryStream();
@@ -315,7 +315,7 @@ namespace clstat
 				{
 					if (gzip.Length < uncomplen)
 					{
-						compress = CompressionType.gzip;
+						compress = CLStatCompressionType.gzip;
 						gzip.Position = 0;
 						return gzip;
 					}
@@ -324,12 +324,12 @@ namespace clstat
 				{
 					if (defl.Length < uncomplen)
 					{
-						compress = CompressionType.deflate;
+						compress = CLStatCompressionType.deflate;
 						defl.Position = 0;
 						return defl;
 					}
 				}
-				compress = CompressionType.none;
+				compress = CLStatCompressionType.none;
 				inputstm.Position = 0;
 				return inputstm;
 			}
@@ -338,11 +338,11 @@ namespace clstat
 				var comp = new MemoryStream();
 				var inputstm = input.OpenRead();
 
-				if (compress == CompressionType.none)
+				if (compress == CLStatCompressionType.none)
 				{
 					return inputstm;
 				}
-				else if (compress == CompressionType.deflate)
+				else if (compress == CLStatCompressionType.deflate)
 				{
 					using (var src = new DeflateStream(comp, CompressionLevel.SmallestSize, true))
 					{

@@ -1,10 +1,20 @@
 ﻿using Cli;
 
+using clstat;
+
 using System;
+using System.IO.Compression;
 using System.Text;
 
 namespace clasp
 {
+	internal enum ClaspCompressionType
+	{
+		none = 0,
+		gzip = 1,
+		deflate = 2,
+		auto = 3
+	}
 	internal enum ClaspHeaderMode
 	{
 		auto = 0,
@@ -27,6 +37,9 @@ namespace clasp
 		public static bool nostatus = false;
 		[CmdArg(Name = "headers", Optional =true,ElementName ="headers", Description ="Indicates which headers should be generated (auto, none or required). Defaults to auto")]
 		public static ClaspHeaderMode headers = ClaspHeaderMode.auto;
+		[CmdArg("compress", Optional = true, ElementName = "compress", Description = "Indicates the type of compression to use on static content: none, gzip, deflate, or auto.")]
+		public static ClaspCompressionType compress = ClaspCompressionType.auto;
+
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		public static bool help = false;
 		
@@ -105,6 +118,134 @@ namespace clasp
 			}
 			return Encoding.UTF8.GetByteCount(s) - i;
 		}
+		public static Stream ProcessCompression(string inp)
+		{
+			var inpba = Encoding.UTF8.GetBytes(inp);
+			var inputstm = new MemoryStream();
+			inputstm.Write(inpba, 0, inpba.Length);
+			inputstm.Position = 0;
+
+			if (compress == ClaspCompressionType.auto)
+			{
+				var defl = new MemoryStream();
+				var gzip = new MemoryStream();
+				var uncomplen = inpba.Length;
+				
+				var deflsrc = new DeflateStream(defl, CompressionLevel.SmallestSize, true);
+				inputstm.Position = 0;
+				inputstm.CopyTo(deflsrc);
+				deflsrc.Flush();
+				defl.Position = 0;
+				var gzipsrc = new GZipStream(gzip, CompressionLevel.SmallestSize, true);
+				inputstm.Position = 0;
+				inputstm.CopyTo(gzipsrc);
+				gzipsrc.Flush();
+				gzip.Position = 0;
+				if (gzip.Length < defl.Length)
+				{
+					if (gzip.Length < uncomplen)
+					{
+						compress = ClaspCompressionType.gzip;
+						gzip.Position = 0;
+						return gzip;
+					}
+				}
+				else
+				{
+					if (defl.Length < uncomplen)
+					{
+						compress = ClaspCompressionType.deflate;
+						defl.Position = 0;
+						return defl;
+					}
+				}
+				compress = ClaspCompressionType.none;
+				inputstm.Position = 0;
+				return inputstm;
+			}
+			else
+			{
+				var comp = new MemoryStream();
+				
+				if (compress == ClaspCompressionType.none)
+				{
+					return inputstm;
+				}
+				else if (compress == ClaspCompressionType.deflate)
+				{
+					using (var src = new DeflateStream(comp, CompressionLevel.SmallestSize, true))
+					{
+						inputstm.CopyTo(src);
+						src.Flush();
+						inputstm.Close();
+					}
+				}
+				else
+				{
+					using (var src = new DeflateStream(comp, CompressionLevel.SmallestSize, true))
+					{
+						inputstm.CopyTo(src);
+						src.Flush();
+						inputstm.Close();
+					}
+				}
+				comp.Position = 0;
+				return comp;
+
+			}
+		}
+		public static void EmitDataFieldDecl(string prologue, Stream stm)
+		{
+			var len = checked((int)stm.Length);
+			stm.Position = 0;
+			output.Write($"static const unsigned char http_response_data[] = {{");
+			int i = 0;
+			var ba = Encoding.ASCII.GetBytes(prologue, 0, prologue.Length);
+			for (; i < ba.Length; ++i)
+			{
+				if ((i % 20) == 0)
+				{
+					output.Write("\r\n");
+					if (i < (ba.Length + len) - 1)
+					{
+						output.Write("    ");
+					}
+				}
+				var entry = "0x" + ba[i].ToString("X2");
+				if (i < (ba.Length + len) - 1)
+				{
+					entry += ", ";
+				}
+				output.Write(entry);
+			}
+			len += prologue.Length;
+			int sb = stm.ReadByte();
+			while (sb != -1)
+			{
+				if ((i % 20) == 0)
+				{
+					output.Write("\r\n");
+					if (i < len - 1)
+					{
+						output.Write("    ");
+					}
+				}
+				var entry = "0x" + sb.ToString("X2");
+				if (i < len - 1)
+				{
+					entry += ", ";
+				}
+				output.Write(entry);
+
+				++i;
+				sb = stm.ReadByte();
+			}
+			if (0 != (i % 20))
+			{
+				output.Write(" ");
+			}
+			output.Write("};\r\n");
+		}
 		public static int Run()
 		{
 			if (help)
@@ -138,14 +279,15 @@ namespace clasp
 					hasTransferEncodingChunked=true;
 					headerBuilder.Append("Transfer-Encoding: chunked\r\n");
 				} 
-			} else
-			{
-				if (headers == ClaspHeaderMode.required)
-				{
-					hasContentLength = true;
-					headerBuilder.Append($"Content-Length: {StaticLen(inputString)}\r\n");
-				}
-			}
+			} 
+			//else
+			//{
+			//	if (headers == ClaspHeaderMode.required)
+			//	{
+			//		hasContentLength = true;
+			//		headerBuilder.Append($"Content-Length: {StaticLen(inputString)}\r\n");
+			//	}
+			//}
 			var len = StaticLen(inputString);
 			var i = inputBuffer.Read();
 			var s = 0;
@@ -216,21 +358,46 @@ namespace clasp
 							{
 								if (autoHeaders)
 								{
-									if (!hasContentLength && !hasTransferEncodingChunked)
+									if (!isStatic)
 									{
-										headerText += "Transfer-Encoding: chunked\r\n";
-										hasTransferEncodingChunked = true;
+										if (!hasContentLength && !hasTransferEncodingChunked)
+										{
+											headerText += "Transfer-Encoding: chunked\r\n";
+											hasTransferEncodingChunked = true;
+										}
 									}
 								}
 								if (headers != ClaspHeaderMode.none)
 								{
-									Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
+									if (isStatic && !hasContentLength)
+									{
+										using (var stm = ProcessCompression(current.ToString())) {
+											hasContentLength = true;
+											headerText += $"Content-Length: {stm.Length}\r\n";
+											switch (compress)
+											{
+												case ClaspCompressionType.deflate:
+													headerText += "Content-Encoding: deflate\r\n";
+													break;
+												case ClaspCompressionType.gzip:
+													headerText += "Content-Encoding: gzip\r\n";
+													break;
+											}
+											EmitDataFieldDecl(headerText + "\r\n", stm);
+											output.Write($"{block}((const char*)http_response_data,sizeof(http_response_data), {state});\r\n");
+											output.Flush();
+										}
+
+									} else {
+										Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
+									}
 								}
 								headerText = null;
 								
 							}
 							else
 							{
+
 								EmitResponseBlock(current.ToString());
 							}
 							current.Clear();
@@ -524,8 +691,11 @@ namespace clasp
 				case 0:
 					if (current.Length > 0)
 					{
+						
 						if (!string.IsNullOrEmpty(headerText))
 						{
+							Stream stm = isStatic?ProcessCompression(current.ToString()):null;
+							
 							if (autoHeaders)
 							{
 								if (!hasContentLength && !hasTransferEncodingChunked)
@@ -537,7 +707,16 @@ namespace clasp
 									}
 									else
 									{
-										headerText += $"Content-Length: {len.ToString()}\r\n";
+										headerText += $"Content-Length: {stm.Length}\r\n";
+										switch(compress)
+										{
+											case ClaspCompressionType.deflate:
+												headerText += "Content-Encoding: deflate\r\n";
+												break;
+											case ClaspCompressionType.gzip:
+												headerText += "Content-Encoding: gzip\r\n";
+												break;
+										}
 										hasContentLength = true;
 									}
 								}
@@ -546,7 +725,6 @@ namespace clasp
 							{
 								if (headers != ClaspHeaderMode.none)
 								{
-
 									Emit(headerText + "\r\n" + clasp.ClaspUtility.GenerateChunked(current.ToString()));
 								} else
 								{
@@ -556,12 +734,19 @@ namespace clasp
 							else
 							{
 								if (headers != ClaspHeaderMode.none)
-								{
-									Emit(headerText + "\r\n" + current.ToString());
+								{									
+									EmitDataFieldDecl(headerText + "\r\n", stm);
 								} else
 								{
-									Emit(current.ToString());
+									EmitDataFieldDecl("", stm);
 								}
+								output.Write($"{block}((const char*)http_response_data,sizeof(http_response_data), {state});\r\n");
+								output.Flush();
+							}
+							if(stm!=null)
+							{
+								stm.Close();
+								stm = null;
 							}
 							headerText = null;
 						}

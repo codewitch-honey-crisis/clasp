@@ -417,7 +417,7 @@ namespace clasptree
 						indout.IndentLevel++;
 						clstat.CLStat.status = "OK";
 						clstat.CLStat.code = 200;
-						clstat.CLStat.compress = clstat.CompressionType.auto;
+						clstat.CLStat.compress = clstat.CLStatCompressionType.auto;
 						clstat.CLStat.type = null;
 						clstat.CLStat.block = block;
 						clstat.CLStat.state = state;
