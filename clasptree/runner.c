@@ -5,7 +5,7 @@ TYPE prlen;
 TYPE pmin;
 TYPE pmax;
 int i, j;
-char ch;
+int ch;
 TYPE state = 0;
 TYPE acc = -1;
 int done;

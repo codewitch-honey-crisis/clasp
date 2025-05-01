@@ -69,7 +69,7 @@ int httpd_response_handler_match(const char* uri) {
     int16_t pmin;
     int16_t pmax;
     int i, j;
-    char ch;
+    int ch;
     int16_t state = 0;
     int16_t acc = -1;
     int done;
