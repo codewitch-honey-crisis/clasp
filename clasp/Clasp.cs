@@ -142,7 +142,7 @@ namespace clasp
 			{
 				if (headers == ClaspHeaderMode.required)
 				{
-					hasTransferEncodingChunked = true;
+					hasContentLength = true;
 					headerBuilder.Append($"Content-Length: {StaticLen(inputString)}\r\n");
 				}
 			}

@@ -12,6 +12,8 @@ extern httpd_response_handler_t httpd_response_handlers[5];
 extern "C" {
 #endif
 
+// ./.404.clasp
+void httpd_content_404_clasp(void* resp_arg);
 // ./favicon.ico
 void httpd_content_favicon_ico(void* resp_arg);
 // ./index.clasp
@@ -114,6 +116,14 @@ int httpd_response_handler_match(const char* uri) {
     }
     return -1;
     
+}
+void httpd_content_404_clasp(void* resp_arg) {
+    httpd_send_block("HTTP/1.1 404 Not found\r\nContent-Length: 285\r\nContent-Type: text"
+        "/html\r\n\r\n<!DOCTYPE html>\r\n<html>\r\n  <head>\r\n    <meta name=\"viewport\" content=\"w"
+        "idth=device-width, initial-scale=1.0\" />\r\n    <title>Resource Not Found</title>\r"
+        "\n  </head>\r\n  <body>\r\n    <h1>Not found</h1>\r\n    <br />\r\n    <p>The specified r"
+        "esource could not be found</p>\r\n  </body>\r\n</html>\r\n  ", 357, resp_arg);
+    free(resp_arg);
 }
 void httpd_content_favicon_ico(void* resp_arg) {
     // HTTP/1.1 200 OK

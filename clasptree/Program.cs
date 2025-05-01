@@ -291,6 +291,10 @@ namespace clasptree
 				{
 					foreach (var f in files)
 					{
+						if(f.Value.Name.StartsWith("."))
+						{
+							continue;
+						}
 						var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;
 
 						if (deffia.Contains(f.Value, new FIAEqComp()))
