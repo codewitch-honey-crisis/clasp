@@ -73,16 +73,8 @@ int httpd_response_handler_match(const char* uri) {
     int16_t state = 0;
     int16_t acc = -1;
     int done;
-    const char* endsz = strchr(uri, '?');
-    size_t urilen;
     bool result;
-    if (endsz) {
-    	urilen = endsz - uri + 1;
-    }
-    else {
-    	urilen = strlen(uri);
-    }
-    ch = adv >= urilen ? -1 : uri[adv++];
+    ch = (uri[adv]=='\0'||uri[adv]=='?') ? -1 : uri[adv++];
     while (ch != -1) {
     	result = false;
     	acc = -1;
@@ -103,7 +95,7 @@ int httpd_response_handler_match(const char* uri) {
     				}
     				if (ch <= pmax) {
     					result = true;
-    					ch = adv >= urilen ? -1 : uri[adv++];
+    					ch = (uri[adv] == '\0' || uri[adv] == '?') ? -1 : uri[adv++];
     					state = tto;
     					done = 0;
     					goto start_dfa;
@@ -111,12 +103,12 @@ int httpd_response_handler_match(const char* uri) {
     			}
     		}
     		if (acc != -1 && result) {
-    			if (adv==urilen) {
+    			if (uri[adv]=='\0' || uri[adv]=='?') {
     				return (int)acc;
     			}
     			return -1;
     		}
-    		ch = adv >= urilen ? -1 : uri[adv++];
+    		ch = (uri[adv] == '\0' || uri[adv] == '?') ? -1 : uri[adv++];
     		state = 0;
     	}
     }
