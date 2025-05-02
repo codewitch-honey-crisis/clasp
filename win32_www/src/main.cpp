@@ -192,9 +192,20 @@ static void httpd_send_expr(int expr, void *arg) {
     itoa(expr, buf, 10);
     httpd_send_chunked(arg, buf, strlen(buf));
 }
-static void httpd_send_expr(float expr, void *arg) {
-    char buf[64];
-    sprintf(buf, "%0.1f", expr);
+static void httpd_send_expr(float expr, void* arg) {
+    char buf[64] = {0};
+    sprintf(buf, "%0.2f", expr);
+    for(size_t i = sizeof(buf)-1;i>0;--i) {
+        char ch = buf[i];
+        if(ch=='0' || ch=='.') {
+            buf[i]='\0'; 
+            if(ch=='.') {
+                break;
+            }
+        } else if(ch!='\0') {
+             break;
+        }
+    }
     httpd_send_chunked(arg, buf, strlen(buf));
 }
 static void httpd_send_expr(unsigned char expr, void *arg) {

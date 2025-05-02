@@ -284,8 +284,19 @@ static void httpd_send_expr(int expr, void* arg) {
 }
 static void httpd_send_expr(float expr, void* arg) {
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
-    char buf[64];
-    sprintf(buf, "%0.1f", expr);
+    char buf[64] = {0};
+    sprintf(buf, "%0.2f", expr);
+    for(size_t i = sizeof(buf)-1;i>0;--i) {
+        char ch = buf[i];
+        if(ch=='0' || ch=='.') {
+            buf[i]='\0'; 
+            if(ch=='.') {
+                break;
+            }
+        } else if(ch!='\0') {
+             break;
+        }
+    }
     httpd_send_chunked(resp_arg, buf, strlen(buf));
 }
 static void httpd_send_expr(unsigned char expr, void* arg) {
