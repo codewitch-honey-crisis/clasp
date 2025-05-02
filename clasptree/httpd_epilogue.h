@@ -1,1 +1,1 @@
-﻿free(resp_arg);
+﻿if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);

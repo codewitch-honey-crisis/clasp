@@ -145,10 +145,7 @@ static WIFI_STATUS wifi_status() {
 
 static httpd_handle_t httpd_handle = nullptr;
 static SemaphoreHandle_t httpd_ui_sync = nullptr;
-struct httpd_async_resp_arg {
-    httpd_handle_t hd;
-    int fd;
-};
+
 static char *httpd_url_encode(char *enc, size_t size, const char *s, const char *table){
     char* result = enc;
     if(table==NULL) table = enc_rfc3986;
@@ -163,7 +160,6 @@ static char *httpd_url_encode(char *enc, size_t size, const char *s, const char 
                 --size;
             }
         }
-        
     }
     return result;
 }
@@ -232,17 +228,30 @@ static bool httpd_match(const char* cmp, const char* uri, size_t len) {
 static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
                                const char* buffer, size_t buffer_len) {
     char buf[64];
-    httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     if (buffer && buffer_len) {
         itoa(buffer_len, buf, 16);
         strcat(buf, "\r\n");
-        httpd_socket_send(hd, fd, buf, strlen(buf), 0);
-        httpd_socket_send(hd, fd, buffer, buffer_len, 0);
-        httpd_socket_send(hd, fd, "\r\n", 2, 0);
+        if(fd>-1) {
+            httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
+            httpd_socket_send(hd, fd, buf, strlen(buf), 0);
+            httpd_socket_send(hd, fd, buffer, buffer_len, 0);
+            httpd_socket_send(hd, fd, "\r\n", 2, 0);
+        } else {
+            httpd_req_t* r=(httpd_req_t*)resp_arg->handle;
+            httpd_send(r,buf,strlen(buf));
+            httpd_send(r,buffer,buffer_len);
+            httpd_send(r,"\r\n",2);
+        }
         return;
     }
-    httpd_socket_send(hd, fd, "0\r\n\r\n", 5, 0);
+    if(fd>-1) {
+        httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
+        httpd_socket_send(hd, fd, "0\r\n\r\n", 5, 0);
+    } else {
+        httpd_req_t* r=(httpd_req_t*)resp_arg->handle;
+        httpd_send(r,"0\r\n\r\n",5);    
+    }
 }
 
 static void httpd_send_block(const char* data, size_t len, void* arg) {
@@ -250,7 +259,14 @@ static void httpd_send_block(const char* data, size_t len, void* arg) {
         return;
     }
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
-    httpd_socket_send(resp_arg->hd, resp_arg->fd, data, len, 0);
+    int fd = resp_arg->fd;
+    if(fd>-1) {
+        httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
+        httpd_socket_send(hd, fd, data, len, 0);
+    } else {
+        httpd_req_t* r=(httpd_req_t*)resp_arg->handle;
+        httpd_send(r,data,len);    
+    }
 }
 static void httpd_send_expr(int expr, void* arg) {
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
@@ -278,18 +294,31 @@ static void httpd_send_expr(const char* expr, void* arg) {
     httpd_send_chunked(resp_arg, expr, strlen(expr));
 }
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
-    //httpd_parse_url(req->uri);
     int h = httpd_response_handler_match(req->uri);
     httpd_async_resp_arg* resp_arg =
         (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
     if (resp_arg == nullptr) {
-        return ESP_ERR_NO_MEM;
+        httpd_async_resp_arg resp_arg_data;
+        resp_arg_data.fd = -1;
+        resp_arg_data.handle = req;
+        strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
+        resp_arg = &resp_arg_data;
+        httpd_content_500_clasp(resp_arg);
+        return ESP_OK;
     }
-    resp_arg->hd = req->handle;
+    strncpy(resp_arg->uri,req->uri,sizeof(req->uri));
+    resp_arg->handle = req->handle;
     resp_arg->fd = httpd_req_to_sockfd(req);
     if (resp_arg->fd < 0) {
         free(resp_arg);
-        return ESP_FAIL;
+        httpd_async_resp_arg resp_arg_data;
+        resp_arg_data.fd = -1;
+        resp_arg_data.handle = req;
+        strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
+        resp_arg = &resp_arg_data;
+        resp_arg->handle = req;
+        httpd_content_500_clasp(resp_arg);    
+        return ESP_OK;
     }
     httpd_work_fn_t fn;
     if(h==-1) {

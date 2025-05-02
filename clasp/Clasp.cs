@@ -115,7 +115,7 @@ namespace clasp
 			{
 				i += 2;
 			}
-			return Encoding.UTF8.GetByteCount(s) - i;
+			return Encoding.UTF8.GetByteCount(s.Substring(i));
 		}
 		public static Stream ProcessCompression(string inp)
 		{
@@ -279,14 +279,7 @@ namespace clasp
 					headerBuilder.Append("Transfer-Encoding: chunked\r\n");
 				} 
 			} 
-			//else
-			//{
-			//	if (headers == ClaspHeaderMode.required)
-			//	{
-			//		hasContentLength = true;
-			//		headerBuilder.Append($"Content-Length: {StaticLen(inputString)}\r\n");
-			//	}
-			//}
+			
 			var len = StaticLen(inputString);
 			var i = inputBuffer.Read();
 			var s = 0;
@@ -381,6 +374,9 @@ namespace clasp
 												case ClaspCompressionType.gzip:
 													headerText += "Content-Encoding: gzip\r\n";
 													break;
+											}
+											foreach (var h in headerText.Split("\r\n")) {
+												output.Write($"// {h}\r\n");
 											}
 											EmitDataFieldDecl(headerText + "\r\n", stm);
 											output.Write($"{block}((const char*)http_response_data,sizeof(http_response_data), {state});\r\n");
@@ -733,12 +729,17 @@ namespace clasp
 							else
 							{
 								if (headers != ClaspHeaderMode.none)
-								{									
+								{
+									foreach (var h in headerText.Split("\r\n"))
+									{
+										output.Write($"// {h}\r\n");
+									}
 									EmitDataFieldDecl(headerText + "\r\n", stm);
 								} else
 								{
 									EmitDataFieldDecl("", stm);
 								}
+
 								output.Write($"{block}((const char*)http_response_data,sizeof(http_response_data), {state});\r\n");
 								output.Flush();
 							}
