@@ -214,19 +214,13 @@ void process(int fd, struct sockaddr_in *clientaddr){
     http_context_t req;
     parse_request(fd, &req);
     struct stat sbuf;
-    httpd_response_handler_t* h = NULL;
-    for(int i = 0;i<HTTPD_RESPONSE_HANDLER_COUNT;++i) {
-        httpd_response_handler_t* hcmp = &httpd_response_handlers[i];
-        if(0==strcmp(req.path,hcmp->path_encoded)) {
-            h=hcmp;
-            break;
-        }
-    }
-    if(h==NULL) {
-        client_error(fd, 404, "not found", "path not found");
+    int hi = httpd_response_handler_match(req.path);
+    if(hi>-1) {
+        httpd_response_handler_t* h = &httpd_response_handlers[hi];
+        h->handler(&fd);
         return;
     }
-    h->handler(&fd);
+    httpd_content_404_clasp(&fd);
 }
 
 
