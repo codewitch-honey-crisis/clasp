@@ -27,8 +27,12 @@
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 
-#define HTTPD_CONTENT_IMPLEMENTATION
-#include "httpd_content.h"
+// used by the page handlers
+struct httpd_async_resp_arg {
+    char uri[513];
+    void* handle;
+    int fd;
+};
 
 // these are globals we use in the page
 
@@ -45,6 +49,10 @@ static void httpd_send_expr(float expr, void* arg);
 static void httpd_send_expr(const char* expr, void* arg);
 char enc_rfc3986[256] = {0};
 char enc_html5[256] = {0};
+
+#define HTTPD_CONTENT_IMPLEMENTATION
+#include "httpd_content.h"
+
 #ifdef M5STACK_CORE2
 using namespace esp_idf;  // devices
 #endif

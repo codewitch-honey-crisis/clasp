@@ -130,17 +130,24 @@ void httpd_get_context(SOCKET sock,httpd_context_t* out_context ) {
     char buf[REQUEST_SIZE];
 
     len = recv(sock, buf, sizeof(buf), 0);
+    if(len==0) {
+        out_context->length = len;
+        out_context->sock = sock;
+        out_context->error = 0;
+        out_context->handler = httpd_content_500_clasp;
+        return;
+            
+    }
     sscanf(buf, "%s %s ", out_context->path, out_context->path);
     out_context->length = len;
     out_context->sock = sock;
     out_context->error = 0;
     out_context->handler = NULL;
-    for (int i = 0; i < HTTPD_RESPONSE_HANDLER_COUNT; ++i) {
-        httpd_response_handler_t *h = &httpd_response_handlers[i];
-        if (0 == strcmp(out_context->path, h->path_encoded)) {
-            out_context->handler = h->handler;
-            break;
-        }
+    int hi = httpd_response_handler_match(out_context->path);
+    if(hi>-1) {
+        out_context->handler = httpd_response_handlers[hi].handler;
+    } else {
+        out_context->handler = httpd_content_404_clasp;
     }
 }
 

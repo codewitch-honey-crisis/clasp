@@ -5,7 +5,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+struct httpd_async_resp_arg {
+    char uri[513];
+    void* handle;
+    int fd;
+};
 extern const float example_star_rating; 
 extern const char* episode_title; 
 extern const char* show_title;

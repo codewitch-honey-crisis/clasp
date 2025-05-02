@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 extern const float example_star_rating; 
 extern const char* episode_title; 
 extern const char* show_title;
