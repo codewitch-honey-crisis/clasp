@@ -192,7 +192,7 @@ namespace clasptree
 					{
 						foreach (var r in itr.Value)
 						{
-							if (r.Min == 0 && r.Max == 1114111)
+							if (r.Min < 128 && r.Max == 1114111)
 							{
 								continue;
 							}
@@ -233,9 +233,9 @@ namespace clasptree
 						{
 							foreach (var r in itr.Value)
 							{
-								if (r.Min == 0 && r.Max == 1114111)
+								if (r.Min < 128 && r.Max == 1114111)
 								{
-									rngs.Add(new FARange(0, 127));
+									rngs.Add(new FARange(r.Min, 127));
 								}
 								else
 								{
