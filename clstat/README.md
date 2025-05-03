@@ -4,7 +4,7 @@ ClStat: The C Language static content generator
 
 ClStat is a C and C++ oriented HTTP response generator that takes static input files and generates method calls to send them over a socket to a browser.
 
-Usage:
+Command Line Interface:
 ```
 clstat
 
