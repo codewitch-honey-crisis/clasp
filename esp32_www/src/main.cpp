@@ -339,7 +339,7 @@ static esp_err_t httpd_request_handler(httpd_req_t* req) {
     // must do it synchronously
     resp_arg_data.fd = -1;
     resp_arg_data.handle = req;
-    resp_arg->method = req->method;
+    resp_arg_data.method = req->method;
     strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
     resp_arg = &resp_arg_data;
     if(handler_index==-1) {
