@@ -382,7 +382,7 @@ namespace clasptree
 				hfas[i+handlers.Count] = maps[i].IsLiteral ? FA.Literal(maps[i].Expr, i + handlers.Count):FA.Parse(maps[i].Expr,i+handlers.Count);
 			}
 			var lexer = FA.ToLexer(hfas, true);
-			lexer.RenderToFile(@"..\..\..\debug.jpg");
+			//lexer.RenderToFile(@"..\..\..\debug.jpg");
 			int[] fsmData = ToRangeArray(lexer);
 			var rsrc = "clasptree.runner_ranges.c";
 			var nrfsmData = ToNonRangeArray(lexer);
