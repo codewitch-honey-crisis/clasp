@@ -2,7 +2,7 @@
 
 ClASP-Tree: The C Language website multi-content generator
 
-ClASP-Tree is a C and C++ oriented HTTP response generator that takes a folder of input files and generates a header with method calls to the content over a socket to a browser.
+ClASP-Tree is a C and C++ oriented HTTP response generator that takes a folder of input files and generates a header with method calls to send the content over a socket or other HTTP transport.
 
 Essentially you feed it a "wwwroot" target folder (it can be any name, wwwroot is just an example) with all your content, including static content, as well as dynamic [ClASP](https://github.com/codewitch-honey-crisis/clasp/tree/master/clasp) (.clasp) files and it creates C/++ code you can include in your project.
 
