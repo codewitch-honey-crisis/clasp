@@ -33,7 +33,7 @@ namespace clasptree
 		static TextReader prologue = null;
 		[CmdArg(Name = "epilogue", ElementName = "epilogue", Optional = true, Description = "The file to insert into each method after any code")]
 		static TextReader epilogue = null;
-		[CmdArg(Name = "handlers", ElementName = "handlers", Optional = true, Description = "Indicated wither to generate no handler entries (none), default entries (@default) or extended (extended) handlers. None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based on <index>. Extended does this and also adds path/ trailing handlers")]
+		[CmdArg(Name = "handlers", ElementName = "handlers", Optional = true, Description = "Indicates whether to generate no handler entries (none), default entries (default) or extended (extended) handlers. None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based on <index>. Extended does this and also adds path/ trailing handlers")]
 		static HandlersMode handlers = HandlersMode.@default;
 		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard. Defaults to \"index.*\"")]
 		static string index = "index.*";

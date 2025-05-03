@@ -33,7 +33,7 @@ clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <sta
 <prefix>        The method prefix to use, if specified.
 <prologue>      The file to insert into each method before any code
 <epilogue>      The file to insert into each method after any code
-<handlers>      Indicated wither to generate no handler entries (none), default entries (@default) or extended (extended)
+<handlers>      Indicates whether to generate no handler entries (none), default entries (default) or extended (extended)
         handlers. None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based
         on <index>. Extended does this and also adds path/ trailing handlers
 <index>         Generate / default handlers for files matching this wildcard. Defaults to "index.*"
