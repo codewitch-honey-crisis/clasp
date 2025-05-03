@@ -5,6 +5,7 @@ using System.Text;
 using System.Xml.Linq;
 using System.Drawing;
 using System.Reflection;
+using System.Diagnostics;
 namespace clasptree
 {
 	enum HandlersMode
@@ -132,10 +133,7 @@ namespace clasptree
 			}
 			return width;
 		}
-		static string FsmWidthToType(int width)
-		{
-			return $"uint{width * 8}_t";
-		}
+		
 		static string FsmWidthToSignedType(int width)
 		{
 			return $"int{width * 8}_t";
@@ -150,6 +148,59 @@ namespace clasptree
 			s = s.Replace("INT32", "int32_t");
 			return s;
 		}
+		static int[] ToNonRangeArray(FA fa)
+		{
+			var working = new List<int>();
+			var closure = new List<FA>();
+			fa.FillClosure(closure);
+			var stateIndices = new int[closure.Count];
+			// fill in the state information
+			for (var i = 0; i < stateIndices.Length; ++i)
+			{
+				var cfa = closure[i];
+				stateIndices[i] = working.Count;
+				// add the accept
+				working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
+				var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
+				// add the number of transitions
+				working.Add(itrgp.Count);
+				foreach (var itr in itrgp)
+				{
+					// We have to fill in the following after the fact
+					// We don't have enough info here
+					// for now just drop the state index as a placeholder
+					working.Add(closure.IndexOf(itr.Key));
+					// add the number of single inputs computed from the packed ranges
+					var inputs = new HashSet<int>(itr.Value.Count);
+					foreach(var val in itr.Value)
+					{
+						for(var j = val.Min; j<=val.Max;++j)
+						{
+							inputs.Add(j);
+						}
+					}
+					working.Add(inputs.Count);
+					working.AddRange(inputs);
+				}
+			}
+			var result = working.ToArray();
+			var state = 0;
+			// now fill in the state indices
+			while (state < result.Length)
+			{
+				++state;
+				var tlen = result[state++];
+				for (var i = 0; i < tlen; ++i)
+				{
+					// patch the destination
+					result[state] = stateIndices[result[state]];
+					++state;
+					var prlen = result[state++];
+					state += prlen;
+				}
+			}
+			return result;
+		}
 		static void EmitFsm(List<HandlerEntry> handlers, TextWriter output)
 		{
 			FA[] hfas = new FA[handlers.Count];
@@ -160,6 +211,14 @@ namespace clasptree
 			}
 			var lexer = FA.ToLexer(hfas, true);
 			int[] fsmData = lexer.ToArray();
+			var rsrc = "clasptree.runner_ranges.c";
+			var nrfsmData = ToNonRangeArray(lexer);
+			if(nrfsmData.Length <=fsmData.Length )
+			{
+				rsrc = "clasptree.runner.c";
+				fsmData = nrfsmData;
+				nrfsmData = null;
+			}
 			var width = FsmWidthBytes(fsmData);
 			output.Write($"static const {FsmWidthToSignedType(width)} fsm_data[] = {{");
 			
@@ -189,7 +248,7 @@ namespace clasptree
 				output.Write(entry);
 			}
 			output.Write("};\r\n\r\n");
-			var stm = Assembly.GetExecutingAssembly().GetManifestResourceStream("clasptree.runner.c");
+			var stm = Assembly.GetExecutingAssembly().GetManifestResourceStream(rsrc);
 			TextReader tr = new StreamReader(stm);
 			var s = tr.ReadToEnd();
 			s = s.Replace("TYPE", width == 4 ? "INT32" : width == 1 ? "INT8" : "INT16");

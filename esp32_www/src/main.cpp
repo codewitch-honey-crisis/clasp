@@ -233,8 +233,9 @@ static bool httpd_match(const char* cmp, const char* uri, size_t len) {
     return true;
     
 }
-static void httpd_send_chunked(httpd_async_resp_arg* resp_arg,
+static void httpd_send_chunked(void* arg,
                                const char* buffer, size_t buffer_len) {
+    httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     char buf[64];
     int fd = resp_arg->fd;
     if (buffer && buffer_len) {
@@ -277,13 +278,11 @@ static void httpd_send_block(const char* data, size_t len, void* arg) {
     }
 }
 static void httpd_send_expr(int expr, void* arg) {
-    httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     char buf[64];
     itoa(expr, buf, 10);
-    httpd_send_chunked(resp_arg, buf, strlen(buf));
+    httpd_send_chunked(arg, buf, strlen(buf));
 }
 static void httpd_send_expr(float expr, void* arg) {
-    httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     char buf[64] = {0};
     sprintf(buf, "%0.2f", expr);
     for(size_t i = sizeof(buf)-1;i>0;--i) {
@@ -297,20 +296,18 @@ static void httpd_send_expr(float expr, void* arg) {
              break;
         }
     }
-    httpd_send_chunked(resp_arg, buf, strlen(buf));
+    httpd_send_chunked(arg, buf, strlen(buf));
 }
 static void httpd_send_expr(unsigned char expr, void* arg) {
-    httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     char buf[64];
     sprintf(buf, "%02d", (int)expr);
-    httpd_send_chunked(resp_arg, buf, strlen(buf));
+    httpd_send_chunked(arg, buf, strlen(buf));
 }
 static void httpd_send_expr(const char* expr, void* arg) {
-    httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     if (!expr || !*expr) {
         return;
     }
-    httpd_send_chunked(resp_arg, expr, strlen(expr));
+    httpd_send_chunked(arg, expr, strlen(expr));
 }
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
     int h = httpd_response_handler_match(req->uri);
