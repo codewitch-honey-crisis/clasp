@@ -14,7 +14,7 @@ Usage:
 
 clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /prefix <prefix> ]
     [ /prologue <prologue> ] [ /epilogue <epilogue> ] [ /handlers <handlers> ] [ /index <index> ] [ /nostatus ]
-    [ /handlerfsm ]
+    [ /handlerfsm ] [ /urlmap <urlmap> ]
 
 <input>         The root directory of the site. Defaults to the current directory
 <output>        The output file to generate. Defaults to <stdout>
@@ -30,15 +30,16 @@ clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <sta
 <index>         Generate / default handlers for files matching this wildcard. Defaults to "index.*"
 /nostatus       Suppress the status headers
 /handlerfsm     Generate a finite state machine that can be used for matching headers
+<urlmap>        Generates handler mappings from a map file. <headersfsm> must be specified
 
 clasptree /?
 
-/?             Displays this screen
+/?              Displays this screen
 ```
 
 Consider the following
 ```
-clasptree ..\..\..\www ..\..\..\..\esp32_www\include\httpd_content.h /prefix httpd_ /epilogue ..\..\..\httpd_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /handlerfsm
+clasptree ..\..\..\www ..\..\..\..\esp32_www\include\httpd_content.h /prefix httpd_ /epilogue ..\..\..\httpd_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /handlerfsm /urlmap //\//\//\httpd_map.map
 ```
 This will take all the content in a folder called www, and generate a header file called httpd_content.h with it.
 It specifies the prefix to use for the generated symbols, an epilogue of code to append in each method, the argument and the methods used to send data.
@@ -57,7 +58,17 @@ The options in the command line above, in order,
 4. indicates the name of the send block function is `httpd_send_block`
 5. indicates the name of the send expression function(s) is `httpd_send_expr`
 6. Indicates that for `index.*` files, an additional entry without the trailing path `/` should be added. For example `/foo/index.clasp` will create 3 handlers instead of 2. `/foo/index.clasp` and `/foo/` will be added, and with the extended option `/foo` will also be added.
-6. generates an `int httpd_response_handlers_match(const char* uri)` function that can be used to efficiently match URIs to a specific response handler entry.
+7. generates an `int httpd_response_handlers_match(const char* uri)` function that can be used to efficiently match URIs to a specific response handler entry.
+8. uses a map file to add dynamic regular expression matches and aliases to the response handlers matching function
+
+Here's an example map file
+```
+.fs_api.clasp '(\/api\/spiffs\/(.*))|(\/api\/sdcard\/(.*))' # wildcard match
+index.clasp "/default.html" # literal alias
+```
+The first part of each line is either a comment (starting with `#`) or a path, which may be double quoted if it has spaces. The escape for a quote is `""`
+If not a comment the second part of the line, after a space is the regular expression in single quotes, or a literal in double quotes. You cannot escape literals using double quotes in the second part currently, you must use a regular expression
+The regular expressions already have `^expr$` implied, so further anchoring is not supported. Expressions may not backtrack and lazy matches are not supported.
 
 In the Visual Studio demo for clasptree, this command from above generates this content based on the contents of www:
 
@@ -97,48 +108,41 @@ int httpd_response_handler_match(const char* uri);
 
 #ifdef HTTPD_CONTENT_IMPLEMENTATION
 
-httpd_response_handler_t httpd_response_handlers[5] = {
+httpd_response_handler_t httpd_response_handlers[7] = {
     { "/", "/", httpd_content_index_clasp },
     { "/favicon.ico", "/favicon.ico", httpd_content_favicon_ico },
     { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_content_image_S01E01_Pilot_jpg },
     { "/index.clasp", "/index.clasp", httpd_content_index_clasp },
-    { "/style/w3.css", "/style/w3.css", httpd_content_style_w3_css }
+    { "/style/w3.css", "/style/w3.css", httpd_content_style_w3_css },
+    { "", "", httpd_content_fs_api_clasp },
+    { "/default.html", "/default.html", httpd_content_index_clasp }
 };
-int httpd_response_handler_match(const char* uri) {
-    static const int16_t fsm_data[] = {
-        -1, 0x0001, 0x0006, 0x0001, 0x002F, 0x002F, 0x0000, 0x0003, 0x0014, 0x0001, 0x0066, 0x0066, 0x0052, 0x0001, 0x0069, 0x0069, 0x011A, 0x0001, 0x0073, 0x0073, 
-        -1, 0x0001, 0x001A, 0x0001, 0x0061, 0x0061, -1, 0x0001, 0x0020, 0x0001, 0x0076, 0x0076, -1, 0x0001, 0x0026, 0x0001, 0x0069, 0x0069, -1, 0x0001, 
-        0x002C, 0x0001, 0x0063, 0x0063, -1, 0x0001, 0x0032, 0x0001, 0x006F, 0x006F, -1, 0x0001, 0x0038, 0x0001, 0x006E, 0x006E, -1, 0x0001, 0x003E, 0x0001, 
-     ...};
-   
+// matches a path to a response handler index
+int httpd_response_handler_match(const char* path_and_query) {
+    static const int32_t fsm_data[] = {
+        -1, 1, 6, 1, 47, 47, 0, 5, 28, 1, 
+        ... };
+    
     unsigned long long adv = 0;
     int tlen;
-    int16_t tto;
-    int16_t prlen;
-    int16_t pmin;
-    int16_t pmax;
+    int32_t tto;
+    int32_t prlen;
+    int32_t pmin;
+    int32_t pmax;
     int i, j;
-    char ch;
-    int16_t state = 0;
-    int16_t acc = -1;
-    int done;
-    const char* endsz = strchr(uri, '?');
-    size_t urilen;
+    int ch;
+    int32_t state = 0;
+    int32_t acc = -1;
+    bool done;
     bool result;
-    if (endsz) {
-    	urilen = endsz - uri + 1;
-    }
-    else {
-    	urilen = strlen(uri);
-    }
-    ch = adv >= urilen ? -1 : uri[adv++];
+    ch = (path_and_query[adv]=='\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
     while (ch != -1) {
     	result = false;
     	acc = -1;
-    	done = 0;
+    	done = false;
     	while (!done) {
     	start_dfa:
-    		done = 1;
+    		done = true;
     		acc = fsm_data[state++];
     		tlen = fsm_data[state++];
     		for (i = 0; i < tlen; ++i) {
@@ -148,29 +152,66 @@ int httpd_response_handler_match(const char* uri) {
     				pmin = fsm_data[state++];
     				pmax = fsm_data[state++];
     				if (ch < pmin) {
+    					state += ((prlen - (j + 1)) * 2);
     					break;
     				}
     				if (ch <= pmax) {
     					result = true;
-    					ch = adv >= urilen ? -1 : uri[adv++];
+    					ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
     					state = tto;
-    					done = 0;
+    					done = false;
     					goto start_dfa;
     				}
     			}
     		}
     		if (acc != -1 && result) {
-    			if (adv==urilen) {
+    			if (path_and_query[adv]=='\0' || path_and_query[adv]=='?') {
     				return (int)acc;
     			}
     			return -1;
     		}
-    		ch = adv >= urilen ? -1 : uri[adv++];
+    		ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
     		state = 0;
     	}
     }
     return -1;
-    
+
+}
+void httpd_content_404_clasp(void* resp_arg) {
+    // HTTP/1.1 404 Not found
+    // Content-Type: text/html
+    // Content-Length: 184
+    // Content-Encoding: deflate
+    // 
+    static const unsigned char http_response_data[] = {
+        0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x34, 0x30, 0x34, 0x20, 0x4E, 0x6F, 0x74, 0x20, 0x66, 0x6F, 0x75, 
+        ... };
+    httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
+}
+void httpd_content_500_clasp(void* resp_arg) {
+    // HTTP/1.1 500 Internal server error
+    // Content-Type: text/html
+    // Content-Length: 203
+    // Content-Encoding: deflate
+    // 
+    static const unsigned char http_response_data[] = {
+        0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x35, 0x30, 0x30, 0x20, 0x49, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x61, 
+        ... };
+    httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
+}
+void httpd_content_fs_api_clasp(void* resp_arg) {
+    // HTTP/1.1 200 OK
+    // Content-Type: application/json
+    // Content-Length: 79
+    // Content-Encoding: deflate
+    // 
+    static const unsigned char http_response_data[] = {
+        0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
+        ... };
+    httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
 }
 void httpd_content_favicon_ico(void* resp_arg) {
     // HTTP/1.1 200 OK

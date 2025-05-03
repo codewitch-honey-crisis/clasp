@@ -1,0 +1,2 @@
+﻿.fs_api.clasp '(\/api\/spiffs\/(.*))|(\/api\/sdcard\/(.*))' # wildcard match
+index.clasp "/default.html" # literal alias

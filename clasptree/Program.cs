@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using System.Drawing;
 using System.Reflection;
 using System.Diagnostics;
+using static System.Net.Mime.MediaTypeNames;
 namespace clasptree
 {
 	enum HandlersMode
@@ -20,11 +21,11 @@ namespace clasptree
 		static DirectoryInfo input = new DirectoryInfo(Environment.CurrentDirectory);
 		[CmdArg(Ordinal = 1, Optional = true, ElementName = "output", Description = "The output file to generate. Defaults to <stdout>")]
 		static TextWriter output = Console.Out;
-		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client.")]
+		[CmdArg(Name = "block", ElementName = "block", Optional = true, Description = "The function call to send a literal block to the client")]
 		static string block = "response_block";
 		[CmdArg(Name = "expr", ElementName = "expr", Optional = true, Description = "The function call to send an expression to the client.")]
 		static string expr = "response_expr";
-		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions.")]
+		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions")]
 		static string state = "response_state";
 		[CmdArg(Name = "prefix", ElementName = "prefix", Optional = true, Description = "The method prefix to use, if specified.")]
 		static string prefix = null;
@@ -36,10 +37,12 @@ namespace clasptree
 		static HandlersMode handlers = HandlersMode.@default;
 		[CmdArg(Name = "index", ElementName = "index", Optional = true, Description = "Generate / default handlers for files matching this wildcard. Defaults to \"index.*\"")]
 		static string index = "index.*";
-		[CmdArg(Name = "nostatus", ElementName ="nostatus", Optional = true, Description = "Suppress the status headers")]
+		[CmdArg(Name = "nostatus", ElementName = "nostatus", Optional = true, Description = "Suppress the status headers")]
 		public static bool nostatus = false;
 		[CmdArg(Name = "handlerfsm", ElementName = "handlerfsm", Optional = true, Description = "Generate a finite state machine that can be used for matching headers")]
 		public static bool handlerfsm = false;
+		[CmdArg(Name = "urlmap", ElementName = "urlmap", Optional = true, Description = "Generates handler mappings from a map file. <headersfsm> must be specified")]
+		public static TextReader urlmap = null;
 		[CmdArg(Group = "help", Name = "?", Description = "Displays this screen")]
 		static bool help = false;
 		static HashSet<string> names = new HashSet<string>();
@@ -103,7 +106,7 @@ namespace clasptree
 				return obj.FullName.GetHashCode();
 			}
 		}
-		
+
 		struct HandlerEntry
 		{
 			public string Path;
@@ -114,6 +117,18 @@ namespace clasptree
 				Path = path;
 				EncodedPath = encodedPath;
 				Method = method;
+			}
+		}
+		struct MapEntry
+		{
+			public string Expr;
+			public bool IsLiteral;
+			public string Path;
+			public MapEntry(string expr, bool isLiteral, string path)
+			{
+				Expr = expr;
+				IsLiteral = isLiteral;
+				Path = path;
 			}
 		}
 		static int FsmWidthBytes(int[] table)
@@ -133,7 +148,7 @@ namespace clasptree
 			}
 			return width;
 		}
-		
+
 		static string FsmWidthToSignedType(int width)
 		{
 			return $"int{width * 8}_t";
@@ -172,9 +187,9 @@ namespace clasptree
 					working.Add(closure.IndexOf(itr.Key));
 					// add the number of single inputs computed from the packed ranges
 					var inputs = new HashSet<int>(itr.Value.Count);
-					foreach(var val in itr.Value)
+					foreach (var val in itr.Value)
 					{
-						for(var j = val.Min; j<=val.Max;++j)
+						for (var j = val.Min; j <= val.Max; ++j)
 						{
 							inputs.Add(j);
 						}
@@ -201,19 +216,24 @@ namespace clasptree
 			}
 			return result;
 		}
-		static void EmitFsm(List<HandlerEntry> handlers, TextWriter output)
+		static void EmitFsm(List<HandlerEntry> handlers, List<MapEntry> maps, TextWriter output)
 		{
-			FA[] hfas = new FA[handlers.Count];
-			for(var i = 0;i<handlers.Count;++i)
+			FA[] hfas = new FA[handlers.Count+maps.Count];
+			for (var i = 0; i < handlers.Count; ++i)
 			{
 				var h = handlers[i];
 				hfas[i] = FA.Literal(h.EncodedPath, i);
 			}
+			for(var i = 0;i<maps.Count;++i)
+			{
+				hfas[i+handlers.Count] = maps[i].IsLiteral ? FA.Literal(maps[i].Expr, i + handlers.Count):FA.Parse(maps[i].Expr,i+handlers.Count);
+			}
 			var lexer = FA.ToLexer(hfas, true);
+			lexer.RenderToFile(@"..\..\..\debug.jpg");
 			int[] fsmData = lexer.ToArray();
 			var rsrc = "clasptree.runner_ranges.c";
 			var nrfsmData = ToNonRangeArray(lexer);
-			if(nrfsmData.Length <=fsmData.Length )
+			if (nrfsmData.Length <= fsmData.Length)
 			{
 				rsrc = "clasptree.runner.c";
 				fsmData = nrfsmData;
@@ -221,10 +241,10 @@ namespace clasptree
 			}
 			var width = FsmWidthBytes(fsmData);
 			output.Write($"static const {FsmWidthToSignedType(width)} fsm_data[] = {{");
-			
+
 			for (var i = 0; i < fsmData.Length; ++i)
 			{
-				if ((i % (40/width)) == 0)
+				if ((i % (40 / width)) == 0)
 				{
 					output.Write("\r\n");
 					if (i < fsmData.Length - 1)
@@ -233,8 +253,8 @@ namespace clasptree
 					}
 				}
 				var entry = fsmData[i].ToString();
-				
-				if (i < fsmData.Length- 1)
+
+				if (i < fsmData.Length - 1)
 				{
 					entry += ", ";
 				}
@@ -263,23 +283,28 @@ namespace clasptree
 					CliUtility.PrintUsage(CliUtility.GetSwitches(null, typeof(Program)));
 					return 0;
 				}
-				if (handlers==HandlersMode.none && parsed.NamedArguments.ContainsKey("index")) 
+				if (handlers == HandlersMode.none && parsed.NamedArguments.ContainsKey("index"))
 				{
-					throw new ArgumentException($"{CliUtility.SwitchPrefix}<handlers> \"none\" cannot be specified with {CliUtility.SwitchPrefix}index");
+					throw new ArgumentException($"{CliUtility.SwitchPrefix}handlers \"none\" cannot be specified with {CliUtility.SwitchPrefix}index");
 				}
 				if (handlers == HandlersMode.none && handlerfsm)
 				{
-					throw new ArgumentException($"{CliUtility.SwitchPrefix}<handlers> \"none\" cannot be specified with {CliUtility.SwitchPrefix}handlersfsm");
+					throw new ArgumentException($"{CliUtility.SwitchPrefix}handlers \"none\" cannot be specified with {CliUtility.SwitchPrefix}handlersfsm");
 				}
-					if (prefix == null) prefix = "";
+				if(urlmap!=null && !handlerfsm)
+				{
+					throw new ArgumentException($"{CliUtility.SwitchPrefix}handlersfsm must be specified with {CliUtility.SwitchPrefix}urlmap");
+				}
+				if (prefix == null) prefix = "";
+
 				var prolStr = prologue != null ? prologue.ReadToEnd() : "";
 				var epilStr = epilogue != null ? epilogue.ReadToEnd() : "";
 				var fia = input.GetFiles("*.*", SearchOption.AllDirectories);
 				var deffia = new List<FileInfo>(input.GetFiles(index, SearchOption.AllDirectories));
-				for(int i = 0; i < deffia.Count; i++)
+				for (int i = 0; i < deffia.Count; i++)
 				{
 					var file = deffia[i];
-					if(file.Extension.ToLowerInvariant()==".h")
+					if (file.Extension.ToLowerInvariant() == ".h")
 					{
 						deffia.RemoveAt(i--);
 					}
@@ -292,21 +317,19 @@ namespace clasptree
 					if (fi.Extension.ToLowerInvariant() == ".h")
 					{
 						var relpath = fi.Directory.FullName.Substring(Path.GetFullPath(input.FullName).Length);
-						if(relpath.StartsWith(Path.DirectorySeparatorChar))
+						if (relpath.StartsWith(Path.DirectorySeparatorChar))
 						{
 							relpath = relpath.Substring(1);
 						}
 						var outdir = Path.GetDirectoryName(CliUtility.GetFilename(output));
 						var outfulldir = Path.GetFullPath(outdir);
 						var fn = Path.Combine(outfulldir, Path.Combine(relpath, fi.Name));
-						includes.Append($"#include \"{Path.Combine(relpath,Path.GetFileName(fn))}\"\r\n");
+						includes.Append($"#include \"{Path.Combine(relpath, Path.GetFileName(fn))}\"\r\n");
 						var dir = Path.GetDirectoryName(fn);
 						if (!Directory.Exists(dir))
 						{
 							Directory.CreateDirectory(dir);
 						}
-						
-						
 						try
 						{
 							File.Delete(fn);
@@ -337,13 +360,71 @@ namespace clasptree
 				indout.Write($"#ifndef {def}\r\n");
 				indout.Write($"#define {def}\r\n");
 				indout.Write("\r\n");
-				indout.Write(includes.ToString()+"\r\n");
+				indout.Write(includes.ToString() + "\r\n");
 				var handlersList = new List<HandlerEntry>();
+				var mapList = new List<MapEntry>();
 				if (handlers != HandlersMode.none)
 				{
+					if(urlmap!=null)
+					{
+						string line;
+						var lineno = 0;
+						while(null!=(line=urlmap.ReadLine()))
+						{
+							++lineno;
+							int idx = line.IndexOf('#');
+							if(idx>-1)
+							{
+								line = line.Substring(0, idx);
+							}
+							line = line.Trim();
+							if (line.Length == 0) continue;
+							// find the split
+							var path = new StringBuilder();
+							var splitIndex = -1;
+							if (line.StartsWith("\""))
+							{
+								for(int i = 0;i<line.Length-1;++i)
+								{
+									if (line[i]=='"')
+									{
+										if (line[i+1]=='"')
+										{
+											path.Append('\"');
+											// skip the next char
+											++i;
+											continue;
+										}
+										splitIndex = i+1;
+										break;
+									} else
+									{
+										path.Append(line[i]);
+									}
+								}
+								if(splitIndex==-1)
+								{
+									throw new Exception($"No expression entry at line {lineno}");
+								}
+
+							} else
+							{
+								splitIndex = line.IndexOf(' ');
+								if (splitIndex == -1)
+								{
+									throw new Exception($"No expression entry at line {lineno}");
+								}
+								path.Append(line.Substring(0, splitIndex));
+							}
+							var isLiteral = line.EndsWith('\"');
+							var expr = line.Substring(splitIndex + 1);
+
+							mapList.Add(new MapEntry(expr.Substring(1,expr.Length-2),isLiteral,path.ToString()));
+						}
+					}
 					foreach (var f in files)
 					{
-						if(f.Value.Name.StartsWith("."))
+						if (f.Value.Name.StartsWith("."))
 						{
 							continue;
 						}
@@ -360,12 +441,12 @@ namespace clasptree
 							}
 							string hext = null;
 							string hstd = $"/{dname}";
-							if(dname.Length>1)
+							if (dname.Length > 1)
 							{
 								hext = "/" + dname.Substring(0, dname.Length - 1);
 							}
 							handlersList.Add(new HandlerEntry(hstd, System.Web.HttpUtility.UrlPathEncode(hstd), $"{prefix}content_{f.Key}"));
-							if(hext!=null && handlers==HandlersMode.extended)
+							if (hext != null && handlers == HandlersMode.extended)
 							{
 								handlersList.Add(new HandlerEntry(hext, System.Web.HttpUtility.UrlPathEncode(hext), $"{prefix}content_{f.Key}"));
 							}
@@ -375,11 +456,11 @@ namespace clasptree
 					handlersList.Sort((x, y) => x.Path.CompareTo(y.Path));
 				}
 
-				if (handlers!=HandlersMode.none)
+				if (handlers != HandlersMode.none)
 				{
-					indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {handlersList.Count}\r\n");
+					indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {handlersList.Count+mapList.Count}\r\n");
 					indout.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
-					indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{handlersList.Count}];\r\n");
+					indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT];\r\n");
 				}
 
 
@@ -393,7 +474,7 @@ namespace clasptree
 					indout.Write($"// ./{mname}\r\n");
 					indout.Write($"void {prefix}content_{f.Key}(void* {state});\r\n");
 				}
-				if(handlerfsm)
+				if (handlerfsm)
 				{
 					indout.Write("/// @brief Matches a path to one of the response handler entries\r\n/// @param path_and_query The path to match which can include the query string (ignored)\r\n/// @return The index of the response handler entry, or -1 if no match\r\n");
 					indout.Write($"int {prefix}response_handler_match(const char* path_and_query);\r\n");
@@ -405,9 +486,9 @@ namespace clasptree
 				indout.Write($"#endif // {def}\r\n\r\n");
 				var impl = fname.ToUpperInvariant() + "_IMPLEMENTATION";
 				indout.Write($"#ifdef {impl}\r\n\r\n");
-				if (handlers!=HandlersMode.none)
+				if (handlers != HandlersMode.none)
 				{
-					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{handlersList.Count}] = {{\r\n");
+					indout.Write($"{prefix}response_handler_t {prefix}response_handlers[{handlersList.Count+mapList.Count}] = {{\r\n");
 					for (var i = 0; i < handlersList.Count; i++)
 					{
 						var handler = handlersList[i];
@@ -415,7 +496,29 @@ namespace clasptree
 						indout.Write($"{clasp.ClaspUtility.ToSZLiteral(handler.Path)}");
 						indout.Write(", ");
 						indout.Write($"{clasp.ClaspUtility.ToSZLiteral(handler.EncodedPath)}, {handler.Method}");
-						if (i < handlersList.Count - 1)
+						if (i < handlersList.Count+mapList.Count - 1)
+						{
+							indout.Write(" },\r\n");
+						}
+						else
+						{
+							indout.Write(" }\r\n");
+						}
+					}
+					for(var i = 0;i<mapList.Count; ++i)
+					{
+						indout.Write("    { ");
+						if (!mapList[i].IsLiteral)
+						{
+							indout.Write("\"\", \"\", ");
+						} else
+						{
+							indout.Write($"{clasp.ClaspUtility.ToSZLiteral(mapList[i].Expr)}, {clasp.ClaspUtility.ToSZLiteral(System.Web.HttpUtility.UrlPathEncode(mapList[i].Expr))}, ");
+						}
+						var mname = mapList[i].Path;
+						var sn = MakeSafeName(mname,true);
+						indout.Write($"{prefix}content_{sn}");
+						if (i < mapList.Count - 1)
 						{
 							indout.Write(" },\r\n");
 						}
@@ -432,7 +535,7 @@ namespace clasptree
 					indout.Write("// matches a path to a response handler index\r\n");
 					indout.Write($"int {prefix}response_handler_match(const char* path_and_query) {{\r\n");
 					indout.IndentLevel++;
-					EmitFsm(handlersList, indout);
+					EmitFsm(handlersList,mapList, indout);
 					indout.IndentLevel--;
 					indout.Write("}\r\n");
 				}
@@ -493,7 +596,8 @@ namespace clasptree
 				indout.Write($"#endif // {impl}\r\n");
 				indout.Flush();
 				var ofn = CliUtility.GetFilename(output);
-				if (!string.IsNullOrEmpty(ofn)) {
+				if (!string.IsNullOrEmpty(ofn))
+				{
 					Console.Error.WriteLine($"Successfully wrote to {ofn}.");
 				}
 			}

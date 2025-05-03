@@ -1,0 +1,12 @@
+﻿<%@status code="200" text="OK"%>
+<%@header name="Content-Type" value="application/json"%>[
+	{
+		"name": "foo",
+		"children": [
+			{
+				"name": "bar.txt",
+				"length": 12
+			}
+		]
+	}
+]

@@ -5,9 +5,9 @@
 
 #include "httpd_application.h"
 
-#define HTTPD_RESPONSE_HANDLER_COUNT 5
+#define HTTPD_RESPONSE_HANDLER_COUNT 7
 typedef struct { const char* path; const char* path_encoded; void (* handler) (void* arg); } httpd_response_handler_t;
-extern httpd_response_handler_t httpd_response_handlers[5];
+extern httpd_response_handler_t httpd_response_handlers[HTTPD_RESPONSE_HANDLER_COUNT];
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,6 +16,8 @@ extern "C" {
 void httpd_content_404_clasp(void* resp_arg);
 // ./.500.clasp
 void httpd_content_500_clasp(void* resp_arg);
+// ./.fs_api.clasp
+void httpd_content_fs_api_clasp(void* resp_arg);
 // ./favicon.ico
 void httpd_content_favicon_ico(void* resp_arg);
 // ./index.clasp
@@ -37,41 +39,81 @@ int httpd_response_handler_match(const char* path_and_query);
 
 #ifdef HTTPD_CONTENT_IMPLEMENTATION
 
-httpd_response_handler_t httpd_response_handlers[5] = {
+httpd_response_handler_t httpd_response_handlers[7] = {
     { "/", "/", httpd_content_index_clasp },
     { "/favicon.ico", "/favicon.ico", httpd_content_favicon_ico },
     { "/image/S01E01 Pilot.jpg", "/image/S01E01%20Pilot.jpg", httpd_content_image_S01E01_Pilot_jpg },
     { "/index.clasp", "/index.clasp", httpd_content_index_clasp },
-    { "/style/w3.css", "/style/w3.css", httpd_content_style_w3_css }
+    { "/style/w3.css", "/style/w3.css", httpd_content_style_w3_css },
+    { "", "", httpd_content_fs_api_clasp },
+    { "/default.html", "/default.html", httpd_content_index_clasp }
 };
 // matches a path to a response handler index
 int httpd_response_handler_match(const char* path_and_query) {
-    static const int16_t fsm_data[] = {
-        -1, 1, 5, 1, 47, 0, 3, 16, 1, 102, 68, 1, 105, 235, 1, 115, -1, 1, 21, 1, 
-        97, -1, 1, 26, 1, 118, -1, 1, 31, 1, 105, -1, 1, 36, 1, 99, -1, 1, 41, 1, 
-        111, -1, 1, 46, 1, 110, -1, 1, 51, 1, 46, -1, 1, 56, 1, 105, -1, 1, 61, 1, 
-        99, -1, 1, 66, 1, 111, 1, 0, -1, 2, 76, 1, 109, 188, 1, 110, -1, 1, 81, 1, 
-        97, -1, 1, 86, 1, 103, -1, 1, 91, 1, 101, -1, 1, 96, 1, 47, -1, 1, 101, 1, 
-        83, -1, 1, 106, 1, 48, -1, 1, 111, 1, 49, -1, 1, 116, 1, 69, -1, 1, 121, 1, 
-        48, -1, 1, 126, 1, 49, -1, 1, 131, 1, 37, -1, 1, 136, 1, 50, -1, 1, 141, 1, 
-        48, -1, 1, 146, 1, 80, -1, 1, 151, 1, 105, -1, 1, 156, 1, 108, -1, 1, 161, 1, 
-        111, -1, 1, 166, 1, 116, -1, 1, 171, 1, 46, -1, 1, 176, 1, 106, -1, 1, 181, 1, 
-        112, -1, 1, 186, 1, 103, 2, 0, -1, 1, 193, 1, 100, -1, 1, 198, 1, 101, -1, 1, 
-        203, 1, 120, -1, 1, 208, 1, 46, -1, 1, 213, 1, 99, -1, 1, 218, 1, 108, -1, 1, 
-        223, 1, 97, -1, 1, 228, 1, 115, -1, 1, 233, 1, 112, 3, 0, -1, 1, 240, 1, 116, 
-        -1, 1, 245, 1, 121, -1, 1, 250, 1, 108, -1, 1, 255, 1, 101, -1, 1, 260, 1, 47, 
-        -1, 1, 265, 1, 119, -1, 1, 270, 1, 51, -1, 1, 275, 1, 46, -1, 1, 280, 1, 99, 
-        -1, 1, 285, 1, 115, -1, 1, 290, 1, 115, 4, 0 };
+    static const int32_t fsm_data[] = {
+        -1, 1, 6, 1, 47, 47, 0, 5, 28, 1, 
+        97, 97, 122, 1, 100, 100, 190, 1, 102, 102, 
+        252, 1, 105, 105, 452, 1, 115, 115, -1, 1, 
+        34, 1, 112, 112, -1, 1, 40, 1, 105, 105, 
+        -1, 1, 46, 1, 47, 47, -1, 1, 52, 1, 
+        115, 115, -1, 2, 62, 1, 100, 100, 98, 1, 
+        112, 112, -1, 1, 68, 1, 99, 99, -1, 1, 
+        74, 1, 97, 97, -1, 1, 80, 1, 114, 114, 
+        -1, 1, 86, 1, 100, 100, -1, 1, 92, 1, 
+        47, 47, 5, 1, 92, 1, 0, 1114111, -1, 1, 
+        104, 1, 105, 105, -1, 1, 110, 1, 102, 102, 
+        -1, 1, 116, 1, 102, 102, -1, 1, 86, 1, 
+        115, 115, -1, 1, 128, 1, 101, 101, -1, 1, 
+        134, 1, 102, 102, -1, 1, 140, 1, 97, 97, 
+        -1, 1, 146, 1, 117, 117, -1, 1, 152, 1, 
+        108, 108, -1, 1, 158, 1, 116, 116, -1, 1, 
+        164, 1, 46, 46, -1, 1, 170, 1, 104, 104, 
+        -1, 1, 176, 1, 116, 116, -1, 1, 182, 1, 
+        109, 109, -1, 1, 188, 1, 108, 108, 6, 0, 
+        -1, 1, 196, 1, 97, 97, -1, 1, 202, 1, 
+        118, 118, -1, 1, 208, 1, 105, 105, -1, 1, 
+        214, 1, 99, 99, -1, 1, 220, 1, 111, 111, 
+        -1, 1, 226, 1, 110, 110, -1, 1, 232, 1, 
+        46, 46, -1, 1, 238, 1, 105, 105, -1, 1, 
+        244, 1, 99, 99, -1, 1, 250, 1, 111, 111, 
+        1, 0, -1, 2, 262, 1, 109, 109, 396, 1, 
+        110, 110, -1, 1, 268, 1, 97, 97, -1, 1, 
+        274, 1, 103, 103, -1, 1, 280, 1, 101, 101, 
+        -1, 1, 286, 1, 47, 47, -1, 1, 292, 1, 
+        83, 83, -1, 1, 298, 1, 48, 48, -1, 1, 
+        304, 1, 49, 49, -1, 1, 310, 1, 69, 69, 
+        -1, 1, 316, 1, 48, 48, -1, 1, 322, 1, 
+        49, 49, -1, 1, 328, 1, 37, 37, -1, 1, 
+        334, 1, 50, 50, -1, 1, 340, 1, 48, 48, 
+        -1, 1, 346, 1, 80, 80, -1, 1, 352, 1, 
+        105, 105, -1, 1, 358, 1, 108, 108, -1, 1, 
+        364, 1, 111, 111, -1, 1, 370, 1, 116, 116, 
+        -1, 1, 376, 1, 46, 46, -1, 1, 382, 1, 
+        106, 106, -1, 1, 388, 1, 112, 112, -1, 1, 
+        394, 1, 103, 103, 2, 0, -1, 1, 402, 1, 
+        100, 100, -1, 1, 408, 1, 101, 101, -1, 1, 
+        414, 1, 120, 120, -1, 1, 420, 1, 46, 46, 
+        -1, 1, 426, 1, 99, 99, -1, 1, 432, 1, 
+        108, 108, -1, 1, 438, 1, 97, 97, -1, 1, 
+        444, 1, 115, 115, -1, 1, 450, 1, 112, 112, 
+        3, 0, -1, 1, 458, 1, 116, 116, -1, 1, 
+        464, 1, 121, 121, -1, 1, 470, 1, 108, 108, 
+        -1, 1, 476, 1, 101, 101, -1, 1, 482, 1, 
+        47, 47, -1, 1, 488, 1, 119, 119, -1, 1, 
+        494, 1, 51, 51, -1, 1, 500, 1, 46, 46, 
+        -1, 1, 506, 1, 99, 99, -1, 1, 512, 1, 
+        115, 115, -1, 1, 518, 1, 115, 115, 4, 0 };
     
     unsigned long long adv = 0;
     int tlen;
-    int16_t tto;
-    int16_t prlen;
-    int16_t pcmp;
+    int32_t tto;
+    int32_t prlen;
+    int32_t pmin;
+    int32_t pmax;
     int i, j;
     int ch;
-    int16_t state = 0;
-    int16_t acc = -1;
+    int32_t state = 0;
+    int32_t acc = -1;
     bool done;
     bool result;
     ch = (path_and_query[adv]=='\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
@@ -88,12 +130,13 @@ int httpd_response_handler_match(const char* path_and_query) {
     			tto = fsm_data[state++];
     			prlen = fsm_data[state++];
     			for (j = 0; j < prlen; ++j) {
-    				pcmp = fsm_data[state++];
-    				if (ch < pcmp) {
-    					state += (prlen - (j + 1));
+    				pmin = fsm_data[state++];
+    				pmax = fsm_data[state++];
+    				if (ch < pmin) {
+    					state += ((prlen - (j + 1)) * 2);
     					break;
     				}
-    				if (ch == pcmp) {
+    				if (ch <= pmax) {
     					result = true;
     					ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
     					state = tto;
@@ -163,6 +206,25 @@ void httpd_content_500_clasp(void* resp_arg) {
         0x1C, 0xF9, 0x2F, 0x2E, 0x8F, 0xAF, 0xB1, 0xF2, 0x34, 0xC7, 0x22, 0xA5, 0x64, 0xCC, 0x99, 0x19, 0x96, 0xB4, 0x08, 0xA6, 
         0x2C, 0x3E, 0x7E, 0x91, 0x24, 0xCA, 0x9C, 0x0C, 0x4A, 0x21, 0x71, 0x20, 0xC6, 0xE9, 0x8C, 0x22, 0x6B, 0xD5, 0xE7, 0x86, 
         0xD3, 0x20, 0x6A, 0xCE, 0xF7, 0x93, 0x6E, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x03, 0x00 };
+    httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
+}
+void httpd_content_fs_api_clasp(void* resp_arg) {
+    // HTTP/1.1 200 OK
+    // Content-Type: application/json
+    // Content-Length: 79
+    // Content-Encoding: deflate
+    // 
+    static const unsigned char http_response_data[] = {
+        0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
+        0x74, 0x65, 0x6E, 0x74, 0x2D, 0x54, 0x79, 0x70, 0x65, 0x3A, 0x20, 0x61, 0x70, 0x70, 0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 
+        0x6F, 0x6E, 0x2F, 0x6A, 0x73, 0x6F, 0x6E, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x2D, 0x4C, 0x65, 0x6E, 
+        0x67, 0x74, 0x68, 0x3A, 0x20, 0x37, 0x39, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x2D, 0x45, 0x6E, 0x63, 
+        0x6F, 0x64, 0x69, 0x6E, 0x67, 0x3A, 0x20, 0x64, 0x65, 0x66, 0x6C, 0x61, 0x74, 0x65, 0x0D, 0x0A, 0x0D, 0x0A, 0x8A, 0xE6, 
+        0xE5, 0xE2, 0xAC, 0x06, 0x62, 0x4E, 0xA5, 0xBC, 0xC4, 0xDC, 0x54, 0x25, 0x2B, 0x05, 0xA5, 0xB4, 0xFC, 0x7C, 0x25, 0x1D, 
+        0xB0, 0x48, 0x72, 0x46, 0x66, 0x4E, 0x4A, 0x51, 0x6A, 0x1E, 0x50, 0x34, 0x1A, 0x24, 0x00, 0x51, 0x88, 0xA4, 0x34, 0x29, 
+        0xB1, 0x48, 0xAF, 0xA4, 0xA2, 0x04, 0xA2, 0x1C, 0x28, 0x9E, 0x93, 0x9A, 0x97, 0x5E, 0x92, 0x01, 0x94, 0x31, 0x34, 0x02, 
+        0x8B, 0xD4, 0x82, 0xC8, 0x58, 0x20, 0x01, 0x64, 0xC4, 0x02, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x03, 0x00 };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
     if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
 }
