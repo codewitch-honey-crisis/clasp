@@ -422,5 +422,5 @@ static void httpd_init() {
     }
 }
 ```
-See the [esp32_www](https://github.com/codewitch-honey-crisis/clasp/tree/master/esp32_www) project for code that uses the FSM handler matcher.
+See the [esp32_www](https://github.com/codewitch-honey-crisis/clasp/tree/master/esp32_www) project for code that uses the FSM handler matcher - particularly [this routine](https://github.com/codewitch-honey-crisis/clasp/blob/master/esp32_www/src/main.cpp#L309)
 
