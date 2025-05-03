@@ -119,20 +119,20 @@ httpd_response_handler_t httpd_response_handlers[7] = {
 };
 // matches a path to a response handler index
 int httpd_response_handler_match(const char* path_and_query) {
-    static const int32_t fsm_data[] = {
+    static const int16_t fsm_data[] = {
         -1, 1, 6, 1, 47, 47, 0, 5, 28, 1, 
         ... };
     
     unsigned long long adv = 0;
     int tlen;
-    int32_t tto;
-    int32_t prlen;
-    int32_t pmin;
-    int32_t pmax;
+    int16_t tto;
+    int16_t prlen;
+    int16_t pmin;
+    int16_t pmax;
     int i, j;
     int ch;
-    int32_t state = 0;
-    int32_t acc = -1;
+    int16_t state = 0;
+    int16_t acc = -1;
     bool done;
     bool result;
     ch = (path_and_query[adv]=='\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
