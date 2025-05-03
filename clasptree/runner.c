@@ -2,7 +2,7 @@
 int tlen;
 TYPE tto;
 TYPE prlen;
-TYPE pmin;
+TYPE pcmp;
 int i, j;
 int ch;
 TYPE state = 0;
@@ -23,12 +23,12 @@ while (ch != -1) {
 			tto = fsm_data[state++];
 			prlen = fsm_data[state++];
 			for (j = 0; j < prlen; ++j) {
-				pmin = fsm_data[state++];
-				if (ch < pmin) {
+				pcmp = fsm_data[state++];
+				if (ch < pcmp) {
 					state += (prlen - (j + 1));
 					break;
 				}
-				if (ch == pmin) {
+				if (ch == pcmp) {
 					result = true;
 					ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
 					state = tto;

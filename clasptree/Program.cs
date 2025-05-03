@@ -224,7 +224,7 @@ namespace clasptree
 			
 			for (var i = 0; i < fsmData.Length; ++i)
 			{
-				if ((i % 20) == 0)
+				if ((i % (40/width)) == 0)
 				{
 					output.Write("\r\n");
 					if (i < fsmData.Length - 1)
@@ -232,22 +232,15 @@ namespace clasptree
 						output.Write("    ");
 					}
 				}
-				string entry;
-				if (fsmData[i] == -1)
-				{
-					entry = "-1";
-				}
-				else
-				{
-					entry = "0x" + fsmData[i].ToString("X" + (width * 2).ToString());
-				}
+				var entry = fsmData[i].ToString();
+				
 				if (i < fsmData.Length- 1)
 				{
 					entry += ", ";
 				}
 				output.Write(entry);
 			}
-			output.Write("};\r\n\r\n");
+			output.Write(" };\r\n\r\n");
 			var stm = Assembly.GetExecutingAssembly().GetManifestResourceStream(rsrc);
 			TextReader tr = new StreamReader(stm);
 			var s = tr.ReadToEnd();
