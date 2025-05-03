@@ -357,7 +357,7 @@ error:
     // and send a 500
     resp_arg_data.fd = -1;
     resp_arg_data.handle = req;
-    resp_arg->method = req->method;
+    resp_arg_data.method = req->method;
     strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
     resp_arg = &resp_arg_data;
     httpd_content_500_clasp(resp_arg);
