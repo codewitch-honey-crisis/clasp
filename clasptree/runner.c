@@ -1,4 +1,4 @@
-﻿unsigned long long adv = 0;
+﻿int adv = 0;
 int tlen;
 TYPE tto;
 TYPE prlen;

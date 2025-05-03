@@ -104,7 +104,7 @@ int httpd_response_handler_match(const char* path_and_query) {
         -1, 1, 506, 1, 99, 99, -1, 1, 512, 1, 
         115, 115, -1, 1, 518, 1, 115, 115, 4, 0 };
     
-    unsigned long long adv = 0;
+    int adv = 0;
     int tlen;
     int32_t tto;
     int32_t prlen;
