@@ -66,9 +66,9 @@ Here's an example map file
 .fs_api.clasp '(\/api\/spiffs\/(.*))|(\/api\/sdcard\/(.*))' # wildcard match
 index.clasp "/default.html" # literal alias
 ```
-The first part of each line is either a comment (starting with `#`) or a path, which may be double quoted if it has spaces. The escape for a quote is `""`
-If not a comment the second part of the line, after a space is the regular expression in single quotes, or a literal in double quotes. You cannot escape literals using double quotes in the second part currently, you must use a regular expression
-The regular expressions already have `^expr$` implied, so further anchoring is not supported. Expressions may not backtrack and lazy matches are not supported.
+The first part of each line is either a comment (starting with `#`) or a path, which may be double quoted if it has spaces. The path points to a file within the www root folder that should be emitted when the expression is matched. The escape for a quote is `""`
+If not a comment the second part of the line, after a space is an expression - either a regular expression in single quotes, or a literal in double quotes. You cannot escape literals using double quotes in the second/expression part currently, you must use a regular expression
+The regular expressions already have `^expr$` implied, so further anchoring is not supported. Regular expressions may not backtrack and lazy matches are not supported.
 
 In the Visual Studio demo for clasptree, this command from above generates this content based on the contents of www:
 
