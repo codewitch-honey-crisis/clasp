@@ -58,6 +58,7 @@ To understand the details of how it works see the READMEs for CLASP and ClStat, 
 - For .clasp files, they are interpreted as dynamic content and generated accordingly.
 - For .h files, they are copied into the input directory in a mirrored tree, and an `#include` is added in the generated code.
 - For other files, it is potentially compressed and embedded as static.
+- For each content file, it will have an associated handler created if necessary, unless the filename starts with `.` in which case it will be treated as hidden. You can call it in your code, but it will not be considered by the match function or otherwise in the handler list.
 
 The options in the command line above, in order, 
 
