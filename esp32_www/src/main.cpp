@@ -306,45 +306,39 @@ static void httpd_send_expr(const char* expr, void* arg) {
     httpd_send_chunked(arg, expr, strlen(expr));
 }
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
-    int h = httpd_response_handler_match(req->uri);
+    int handler_index = httpd_response_handler_match(req->uri);
     httpd_async_resp_arg* resp_arg =
         (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
     if (resp_arg == nullptr) { // no memory
-        // allocate a resp arg on the stack, fill it with our info
-        // and send a 500
-        httpd_async_resp_arg resp_arg_data;
-        resp_arg_data.fd = -1;
-        resp_arg_data.handle = req;
-        strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
-        resp_arg = &resp_arg_data;
-        httpd_content_500_clasp(resp_arg);
-        return ESP_OK;
+        goto error;
     }
     strncpy(resp_arg->uri,req->uri,sizeof(req->uri));
     resp_arg->handle = req->handle;
     resp_arg->fd = httpd_req_to_sockfd(req);
     if (resp_arg->fd < 0) { // error getting socket
         free(resp_arg);
-        // allocate a resp arg on the stack, fill it with our info
-        // and send a 500
-        httpd_async_resp_arg resp_arg_data;
-        resp_arg_data.fd = -1;
-        resp_arg_data.handle = req;
-        strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
-        resp_arg = &resp_arg_data;
-        httpd_content_500_clasp(resp_arg);    
-        return ESP_OK;
+        goto error;
     }
-    httpd_work_fn_t fn;
-    if(h==-1) {
+    httpd_work_fn_t handler_fn;
+    if(handler_index==-1) {
         // no match, send a 404
-        fn = httpd_content_404_clasp;
+        handler_fn = httpd_content_404_clasp;
     } else {
         // choose the handler
-        fn = (httpd_work_fn_t)httpd_response_handlers[h].handler;
+        handler_fn = (httpd_work_fn_t)httpd_response_handlers[handler_index].handler;
     }
     // and off we go.
-    httpd_queue_work(req->handle, fn, resp_arg);
+    httpd_queue_work(req->handle, handler_fn, resp_arg);
+    return ESP_OK;
+error:
+    // allocate a resp arg on the stack, fill it with our info
+    // and send a 500
+    httpd_async_resp_arg resp_arg_data;
+    resp_arg_data.fd = -1;
+    resp_arg_data.handle = req;
+    strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
+    resp_arg = &resp_arg_data;
+    httpd_content_500_clasp(resp_arg);
     return ESP_OK;
 }
 static bool httpd_match(const char* cmp, const char* uri, size_t len) {
