@@ -73,7 +73,7 @@ The regular expressions already have `^expr$` implied, so further anchoring is n
 In the Visual Studio demo for clasptree, this command from above generates this content based on the contents of www:
 
 ```cpp
- // Generated with clasptree
+// Generated with clasptree
 // To use this file, define HTTPD_CONTENT_IMPLEMENTATION in exactly one translation unit (.c/.cpp file) before including this header.
 #ifndef HTTPD_CONTENT_H
 #define HTTPD_CONTENT_H
