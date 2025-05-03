@@ -307,6 +307,7 @@ static void httpd_send_expr(const char* expr, void* arg) {
     httpd_send_chunked(arg, expr, strlen(expr));
 }
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
+    // match the handler
     int handler_index = httpd_response_handler_match(req->uri);
     httpd_async_resp_arg resp_arg_data;
     httpd_async_resp_arg* resp_arg;
@@ -314,7 +315,8 @@ static esp_err_t httpd_request_handler(httpd_req_t* req) {
         resp_arg =
             (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
         if (resp_arg == nullptr) { // no memory
-            goto error;
+            // we can still do it synchronously
+            goto synchronous;
         }
         strncpy(resp_arg->uri,req->uri,sizeof(req->uri));
         resp_arg->handle = req->handle;
@@ -336,6 +338,7 @@ static esp_err_t httpd_request_handler(httpd_req_t* req) {
         httpd_queue_work(req->handle, handler_fn, resp_arg);
         return ESP_OK;
     } 
+synchronous:
     // must do it synchronously
     resp_arg_data.fd = -1;
     resp_arg_data.handle = req;
