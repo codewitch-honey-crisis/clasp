@@ -163,12 +163,117 @@ namespace clasptree
 			s = s.Replace("INT32", "int32_t");
 			return s;
 		}
+		static int[] ToRangeArray(FA fa)
+		{
+			var working = new List<int>();
+			var closure = new List<FA>();
+			fa.FillClosure(closure);
+			var hasUnicode = false;
+			var stateIndices = new int[closure.Count];
+			// fill in the state information
+			for (var i = 0; i < stateIndices.Length; ++i)
+			{
+				var cfa = closure[i];
+				stateIndices[i] = working.Count;
+				// add the accept
+				working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
+				var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
+				// add the number of transitions
+				working.Add(itrgp.Count);
+				foreach (var itr in itrgp)
+				{
+					// We have to fill in the following after the fact
+					// We don't have enough info here
+					// for now just drop the state index as a placeholder
+					working.Add(closure.IndexOf(itr.Key));
+					// add the number of packed ranges
+					working.Add(itr.Value.Count);
+					if (!hasUnicode)
+					{
+						foreach (var r in itr.Value)
+						{
+							if (r.Min == 0 && r.Max == 1114111)
+							{
+								continue;
+							}
+							if (r.Min > 127 || r.Max > 127)
+							{
+								hasUnicode = true;
+								break;
+							}
+						}
+					}
+					var rng = FARange.ToPacked(itr.Value);
+					// add the packed ranges
+					working.AddRange(rng);
+				}
+			}
+			if(!hasUnicode)
+			{
+				working.Clear();
+				for (var i = 0; i < stateIndices.Length; ++i)
+				{
+					var cfa = closure[i];
+					stateIndices[i] = working.Count;
+					// add the accept
+					working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
+					var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
+					// add the number of transitions
+					working.Add(itrgp.Count);
+					foreach (var itr in itrgp)
+					{
+						// We have to fill in the following after the fact
+						// We don't have enough info here
+						// for now just drop the state index as a placeholder
+						working.Add(closure.IndexOf(itr.Key));
+						// add the number of packed ranges
+						working.Add(itr.Value.Count);
+						var rngs = new List<FARange>();
+						if (!hasUnicode)
+						{
+							foreach (var r in itr.Value)
+							{
+								if (r.Min == 0 && r.Max == 1114111)
+								{
+									rngs.Add(new FARange(0, 127));
+								}
+								else
+								{
+									rngs.Add(r);
+								}
+							}
+						}
+						var rng = FARange.ToPacked(rngs);
+						// add the packed ranges
+						working.AddRange(rng);
+					}
+				}
+			}
+			var result = working.ToArray();
+			var state = 0;
+			// now fill in the state indices
+			while (state < result.Length)
+			{
+				++state;
+				var tlen = result[state++];
+				for (var i = 0; i < tlen; ++i)
+				{
+					// patch the destination
+					result[state] = stateIndices[result[state]];
+					++state;
+					var prlen = result[state++];
+					state += prlen * 2;
+				}
+			}
+			return result;
+		}
 		static int[] ToNonRangeArray(FA fa)
 		{
 			var working = new List<int>();
 			var closure = new List<FA>();
 			fa.FillClosure(closure);
 			var stateIndices = new int[closure.Count];
+			var hasUnicode = false;
 			// fill in the state information
 			for (var i = 0; i < stateIndices.Length; ++i)
 			{
@@ -189,13 +294,61 @@ namespace clasptree
 					var inputs = new HashSet<int>(itr.Value.Count);
 					foreach (var val in itr.Value)
 					{
+						if (val.Min>127 || val.Max>127 && !(val.Min==0 && val.Max==1114111))
+						{
+							hasUnicode = true;
+						}
 						for (var j = val.Min; j <= val.Max; ++j)
 						{
+							
 							inputs.Add(j);
 						}
 					}
 					working.Add(inputs.Count);
 					working.AddRange(inputs);
+				}
+			}
+			if(!hasUnicode)
+			{
+				working.Clear();
+				for (var i = 0; i < stateIndices.Length; ++i)
+				{
+					var cfa = closure[i];
+					stateIndices[i] = working.Count;
+					// add the accept
+					working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
+					var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
+					// add the number of transitions
+					working.Add(itrgp.Count);
+					foreach (var itr in itrgp)
+					{
+						// We have to fill in the following after the fact
+						// We don't have enough info here
+						// for now just drop the state index as a placeholder
+						working.Add(closure.IndexOf(itr.Key));
+						// add the number of single inputs computed from the packed ranges
+						var inputs = new HashSet<int>(itr.Value.Count);
+						foreach (var val in itr.Value)
+						{
+							if (val.Min == 0 && val.Max == 1114111)
+							{
+								for (var j = 0; j <= 128; ++j)
+								{
+									inputs.Add(j);
+								}
+							}
+							else
+							{
+								for (var j = val.Min; j <= val.Max; ++j)
+								{
+									if (j > 127) throw new Exception("Invalid internal code");
+									inputs.Add(j);
+								}
+							}
+						}
+						working.Add(inputs.Count);
+						working.AddRange(inputs);
+					}
 				}
 			}
 			var result = working.ToArray();
@@ -230,7 +383,7 @@ namespace clasptree
 			}
 			var lexer = FA.ToLexer(hfas, true);
 			lexer.RenderToFile(@"..\..\..\debug.jpg");
-			int[] fsmData = lexer.ToArray();
+			int[] fsmData = ToRangeArray(lexer);
 			var rsrc = "clasptree.runner_ranges.c";
 			var nrfsmData = ToNonRangeArray(lexer);
 			if (nrfsmData.Length <= fsmData.Length)
