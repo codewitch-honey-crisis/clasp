@@ -54,7 +54,7 @@ The options in the command line above, in order,
 
 1. apply a prefix `httpd_`to all generated functions, types and variables
 2. add the code from `httpd_epilogue.h` to the end of each handler function
-3. names the user defined state variable `resp_arg_`
+3. names the user defined state variable `resp_arg`
 4. indicates the name of the send block function is `httpd_send_block`
 5. indicates the name of the send expression function(s) is `httpd_send_expr`
 6. Indicates that for `index.*` files, an additional entry without the trailing path `/` should be added. For example `/foo/index.clasp` will create 3 handlers instead of 2. `/foo/index.clasp` and `/foo/` will be added, and with the extended option `/foo` will also be added.
