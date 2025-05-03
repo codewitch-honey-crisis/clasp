@@ -7,16 +7,16 @@ int i, j;
 int ch;
 TYPE state = 0;
 TYPE acc = -1;
-int done;
+bool done;
 bool result;
 ch = (path_and_query[adv]=='\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
 while (ch != -1) {
 	result = false;
 	acc = -1;
-	done = 0;
+	done = false;
 	while (!done) {
 	start_dfa:
-		done = 1;
+		done = true;
 		acc = fsm_data[state++];
 		tlen = fsm_data[state++];
 		for (i = 0; i < tlen; ++i) {
@@ -32,7 +32,7 @@ while (ch != -1) {
 					result = true;
 					ch = (path_and_query[adv] == '\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
 					state = tto;
-					done = 0;
+					done = false;
 					goto start_dfa;
 				}
 			}
