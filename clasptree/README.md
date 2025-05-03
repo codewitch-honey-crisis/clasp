@@ -4,7 +4,7 @@ ClASP-Tree: The C Language website multi-content generator
 
 ClASP-Tree is a C and C++ oriented HTTP response generator that takes a folder of input files and generates a header with method calls to the content over a socket to a browser.
 
-Essentially you feed it a www root folder with all your content, including static content, as well as dynamic [ClASP](https://github.com/codewitch-honey-crisis/clasp/tree/master/clasp) (.clasp) files and it creates C/++ code you can include in your project.
+Essentially you feed it a "wwwroot" target folder (it can be any name, wwwroot is just an example) with all your content, including static content, as well as dynamic [ClASP](https://github.com/codewitch-honey-crisis/clasp/tree/master/clasp) (.clasp) files and it creates C/++ code you can include in your project.
 
 The C++ code:
 
@@ -232,7 +232,7 @@ void httpd_content_favicon_ico(void* resp_arg) {
         0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
         ... };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
-    free(resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
 }
 void httpd_content_index_clasp(void* resp_arg) {
     httpd_send_block("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: text"
@@ -303,7 +303,7 @@ void httpd_content_index_clasp(void* resp_arg) {
         "ument.getElementById(\"mySidebar\").style.display = \"block\";\r\n        }\r\n\r\n       "
         " function w3_close() {\r\n            document.getElementById(\"mySidebar\").style.d"
         "isplay = \"none\";\r\n        }\r\n    </script>\r\n</body>\r\n</html>\r\n0\r\n\r\n", 370, resp_arg);
-    free(resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
 }
 void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
     // HTTP/1.1 200 OK
@@ -315,7 +315,7 @@ void httpd_content_image_S01E01_Pilot_jpg(void* resp_arg) {
         0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
         ... };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
-    free(resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
 }
 void httpd_content_style_w3_css(void* resp_arg) {
     // HTTP/1.1 200 OK
@@ -327,12 +327,14 @@ void httpd_content_style_w3_css(void* resp_arg) {
         0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4F, 0x4B, 0x0D, 0x0A, 0x43, 0x6F, 0x6E, 
         ... };
     httpd_send_block((const char*)http_response_data,sizeof(http_response_data), resp_arg);
-    free(resp_arg);
+    if(((httpd_async_resp_arg*)resp_arg)->fd>-1) free(resp_arg);
 }
 #endif // HTTPD_CONTENT_IMPLEMENTATION
 
 ```
 (some of the binary data omitted from above)
+
+In the command line from earlier we've included epilogue code in each handler function to `free(resp_arg);` - you'll see that code at the end of each handler function above.
 
 You'll often declare something like `httpd_application.h` and put it in your web root. Whenever ClASP-Tree encounters a .h file it will copy the header into the same relative directory structure in the output's directory, and add an `#include` to the newly copied file.
 This will contain declarations used in your pages. The following is included with the demo:
@@ -419,4 +421,5 @@ static void httpd_init() {
     }
 }
 ```
-In the command line from earlier we've included epilogue code in each handler function to `free(resp_arg);` - you'll see that code at the end of each handler function above.
+See the [esp32_www](https://github.com/codewitch-honey-crisis/clasp/tree/master/esp32_www) project for code that uses the FSM handler matcher.
+
