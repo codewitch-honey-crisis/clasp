@@ -30,6 +30,7 @@
 // used by the page handlers
 struct httpd_async_resp_arg {
     char uri[513];
+    int method;
     void* handle;
     int fd;
 };
@@ -307,35 +308,53 @@ static void httpd_send_expr(const char* expr, void* arg) {
 }
 static esp_err_t httpd_request_handler(httpd_req_t* req) {
     int handler_index = httpd_response_handler_match(req->uri);
-    httpd_async_resp_arg* resp_arg =
-        (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
-    if (resp_arg == nullptr) { // no memory
-        goto error;
-    }
-    strncpy(resp_arg->uri,req->uri,sizeof(req->uri));
-    resp_arg->handle = req->handle;
-    resp_arg->fd = httpd_req_to_sockfd(req);
-    if (resp_arg->fd < 0) { // error getting socket
-        free(resp_arg);
-        goto error;
-    }
-    httpd_work_fn_t handler_fn;
+    httpd_async_resp_arg resp_arg_data;
+    httpd_async_resp_arg* resp_arg;
+    if(req->method==HTTP_GET) { // async
+        resp_arg =
+            (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
+        if (resp_arg == nullptr) { // no memory
+            goto error;
+        }
+        strncpy(resp_arg->uri,req->uri,sizeof(req->uri));
+        resp_arg->handle = req->handle;
+        resp_arg->method = req->method;
+        resp_arg->fd = httpd_req_to_sockfd(req);
+        if (resp_arg->fd < 0) { // error getting socket
+            free(resp_arg);
+            goto error;
+        }
+        httpd_work_fn_t handler_fn;
+        if(handler_index==-1) {
+            // no match, send a 404
+            handler_fn = httpd_content_404_clasp;
+        } else {
+            // choose the handler
+            handler_fn = (httpd_work_fn_t)httpd_response_handlers[handler_index].handler;
+        }
+        // and off we go.
+        httpd_queue_work(req->handle, handler_fn, resp_arg);
+        return ESP_OK;
+    } 
+    // must do it synchronously
+    resp_arg_data.fd = -1;
+    resp_arg_data.handle = req;
+    resp_arg->method = req->method;
+    strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
+    resp_arg = &resp_arg_data;
     if(handler_index==-1) {
-        // no match, send a 404
-        handler_fn = httpd_content_404_clasp;
+        httpd_content_404_clasp(resp_arg);
     } else {
-        // choose the handler
-        handler_fn = (httpd_work_fn_t)httpd_response_handlers[handler_index].handler;
+        httpd_response_handlers[handler_index].handler(resp_arg);
     }
-    // and off we go.
-    httpd_queue_work(req->handle, handler_fn, resp_arg);
     return ESP_OK;
+    
 error:
     // allocate a resp arg on the stack, fill it with our info
     // and send a 500
-    httpd_async_resp_arg resp_arg_data;
     resp_arg_data.fd = -1;
     resp_arg_data.handle = req;
+    resp_arg->method = req->method;
     strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
     resp_arg = &resp_arg_data;
     httpd_content_500_clasp(resp_arg);
