@@ -60,7 +60,7 @@ This code can be used to emit that dynamic content over a suitable HTTP transpor
 
 The method names are defaulted to `response_block` and `response_expr`, the latter of which may be overloaded, and often is for C++ projects. These two methods get implemented by you in order to send the data to the output transport layer, probably in a platform dependent manner. Note that these method names can be changed via the command line. 
 
-`void response_block(void* state)` takes a singular user defined state value that is passed along with the call. Often this will be some structured data, or as simple as a socket handle. `void response_expr(? value, void* state)` takes a `value` and the `state` (as before) and renders the value over HTTP. The actual type of the `value` parameter is user defined, and in C++ you'll often have several overloads. 
+`void response_block(void* response__state)` takes a singular user defined context value `response_state` that is passed along with the call. Often this will be some structured data, or as simple as a socket handle. `void response_expr(? value, void* response_state)` takes a `value` and the `response__state` (as before) and renders the value over HTTP. The actual type of the `value` parameter is user defined, and in C++ you'll often have several overloads. 
 
 Later we'll explore that, so you understand how it all ties together.
 
