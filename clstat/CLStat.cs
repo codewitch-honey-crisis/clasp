@@ -23,7 +23,7 @@ namespace clstat
 		public static string status = "OK";
 		[CmdArg("nostatus", Optional = true, ElementName = "nostatus", Description = "Indicates that the HTTP status line should be surpressed")]
 		public static bool nostatus = false;
-		[CmdArg("type", Optional = true, ElementName = "type", Description = "Indicates the content type of the data.")]
+		[CmdArg("type", Optional = true, ElementName = "type", Description = "Indicates the content type of the data. If unspecified it is determined from the file extension")]
 		public static string type = null;
 		[CmdArg("compress", Optional = true, ElementName = "compress", Description = "Indicates the type of compression to use: none, gzip, deflate, or auto.")]
 		public static CLStatCompressionType compress = CLStatCompressionType.auto;

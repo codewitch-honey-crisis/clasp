@@ -17,8 +17,7 @@ namespace clasp
 	internal enum ClaspHeaderMode
 	{
 		auto = 0,
-		none = 1,
-		required = 2
+		none = 1
 	}
 	internal class Clasp
 	{
@@ -32,9 +31,9 @@ namespace clasp
 		public static string expr = "response_expr";
 		[CmdArg(Name = "state", ElementName = "state", Optional = true, Description = "The variable name that holds the user state to pass to the response functions")]
 		public static string state = "response_state";
-		[CmdArg(Name = "nostatus", Optional = true, Description = "Suppress the status headers")]
+		[CmdArg(Name = "nostatus", Optional = true, Description = "Suppress the status line")]
 		public static bool nostatus = false;
-		[CmdArg(Name = "headers", Optional =true,ElementName ="headers", Description ="Indicates which headers should be generated (auto, none or required). Defaults to auto")]
+		[CmdArg(Name = "headers", Optional =true,ElementName ="headers", Description ="Indicates which headers should be generated (auto, or none). Defaults to auto")]
 		public static ClaspHeaderMode headers = ClaspHeaderMode.auto;
 		[CmdArg("compress", Optional = true, ElementName = "compress", Description = "Indicates the type of compression to use on static content: none, gzip, deflate, or auto.")]
 		public static ClaspCompressionType compress = ClaspCompressionType.auto;
@@ -273,7 +272,7 @@ namespace clasp
 			var isStatic = !ScanForCodeBlocks(inputString);
 			if(!isStatic)
 			{
-				if(headers==ClaspHeaderMode.required)
+				if(headers==ClaspHeaderMode.auto)
 				{
 					hasTransferEncodingChunked=true;
 					headerBuilder.Append("Transfer-Encoding: chunked\r\n");
@@ -626,7 +625,7 @@ namespace clasp
 								}
 								string ah;
 								bool b;
-								if (dirArgs.TryGetValue("auto-headerBuilder", out ah) && bool.TryParse(ah, out b) && !b)
+								if (dirArgs.TryGetValue("auto-headers", out ah) && bool.TryParse(ah, out b) && !b)
 								{
 									autoHeaders = false;
 								}

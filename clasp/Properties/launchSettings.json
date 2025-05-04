@@ -6,7 +6,7 @@
     },
     "page demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\page.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr"
+      "commandLineArgs": "..\\..\\..\\page.clasp"
     },
     "static demo": {
       "commandName": "Project",

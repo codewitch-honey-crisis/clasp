@@ -180,7 +180,7 @@ static void httpd_send_chunked(void *resp_arg,
 }
 
 static void httpd_send_block(const char *data, size_t len, void *arg) {
-    if (!data || !*data || !len) {
+    if (!data || !len) {
         return;
     }
     httpd_context_t* ctx = (httpd_context_t*)arg;

@@ -261,7 +261,7 @@ static void httpd_send_chunked(void* arg,
 }
 
 static void httpd_send_block(const char* data, size_t len, void* arg) {
-    if (!data || !*data || !len) {
+    if (!data || !len) {
         return;
     }
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
