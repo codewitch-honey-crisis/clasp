@@ -589,7 +589,7 @@ for(int i = 0; i < RESPONSE_HANDLER_COUNT; ++i) {
 }
 // if handler index is -1 it isn't found
 ```
-Note that we compared wiht `.path_encoded` so that the encoded path can be compared almost directly. Note also that we clipped the `?` query part during the comparison.
+Note that we compared with `.path_encoded` so that the encoded path can be compared almost directly. Note also that we clipped the `?` query part during the comparison.
 
 If you generated the finite state machine, this is even easier, as a function does it for you. It's more efficient especially when you have a lot of paths to compare, and it's more flexible, allowing for [map files](#4.1.4) to be used.
 
