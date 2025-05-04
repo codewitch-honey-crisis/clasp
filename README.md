@@ -387,7 +387,7 @@ Each file except `.h` files will be added to the handler routing list unless it 
 <a name="4.1.2"></a>
 ### URL response handler mappings
 
-As mentioned in the previous section, a response handler mapping entry is generated for each content file in the website (.hidden files excluded), for example if you have `www/home.html` an entry will be create for `/home.html` that points to `void content_home_html(void* response_arg)`.
+As mentioned in the previous section, a response handler mapping entry is generated for each content file in the website (.hidden files excluded), for example if you have `www/home.html` an entry will be create for `/home.html` that points to `void content_home_html(void* response_state)`.
 
 By default `index.*` have an additional mapping where they are the "default file" of the directory and will be presented whenever '/' is indicated at that path. For example if you have `/api/index.clasp` a handler will be generated for `/api/index.clasp`, `/api/` and (optionally) `/api` as well.
 
