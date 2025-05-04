@@ -33,7 +33,7 @@ The ClASP Suite is a collection of 3 tools which can be used to embed web conten
 
 The suite was developed with an eye toward embedded web servers such as those on ESP32 devices, but there are example projects for win32 and posix as well as ESP32s to illustrate that the generated code is truly cross platform.
 
-The end goal was to have a set of easy to use tools that can allow me to quickly develop and efficiently embed web content - including dynamic content - into C/++ code.
+The end goal was to have a set of easy to use tools that can allow someone to quickly develop and efficiently embed web content - including dynamic content - into C/++ code.
 
 <a name="1.1"></a>
 ## Examples
