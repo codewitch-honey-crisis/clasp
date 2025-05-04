@@ -429,7 +429,7 @@ Note that the content handler paths are relative to the website root folder.
 
 If you place .h files under your website's folder tree they will be copied into your project, with the same relative path being created in your output directory, and then an `#include` for the file will be placed in the output header file.
 
-For example, placing an `http_application.h` in the root of your website will cause it to be copied to your output directory and an `#include "http_application.h"` line will be added in your output file. Similarly `/api/http_api.h` would cause `./api/httt_api.h` to be copied to your output directory and `#include "api/http_application.h"` line will be added.
+For example, placing an `http_application.h` in the root of your website will cause it to be copied to your output directory and an `#include "http_application.h"` line will be added in your output file. Similarly `/api/http_api.h` would cause `./api/http_api.h` to be copied to your output directory and `#include "api/http_application.h"` line will be added.
 
 <a name="4.1.6"></a>
 ### Prologue and epilogue files
