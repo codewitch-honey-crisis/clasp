@@ -403,6 +403,8 @@ Optionally, you can generate a finite state machine as a more efficient and more
 <a name="4.1.4"></a>
 ### Map files
 
+The following is only available when FSM matching is indicated: 
+
 Sometimes you may need aliases for content such that it can be returned from multiple paths. You also may want to match paths based on patterns, such as regular expressions. Map files allow you to create additional handler routing for content based on the input you give it.
 
 A map file is specified on the command line, and it is line based syntax where each line creates another handler routing entry.
