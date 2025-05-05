@@ -107,9 +107,9 @@ If used, the directives `<%@status %>` and `<%@header %>` must appear before any
 ```
 `<%= %>` expression blocks contain a C/C++ expression rather than statements. The expression gets passed to one of your response expression function (defaults to `response_expr`) as the first argument. You can create overloads of that function to accept various kinds of arguments from `<%= %>`. Consider the following snippet:
 ```html
-<span>Name: <%=contact[i].name%><span><br />
-<span>Age: <%=contact[i].age%><span><br />
-<span>Email: <%=contact[i].email%><span><br />
+<span>Name: <%=contact[i].name%></span><br />
+<span>Age: <%=contact[i].age%></span><br />
+<span>Email: <%=contact[i].email%></span><br />
 ```
 Now assume your contact struct is something like:
 ```cpp
