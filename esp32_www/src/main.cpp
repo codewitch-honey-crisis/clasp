@@ -10,8 +10,8 @@
 #define SD_PORT SPI3_HOST
 #define SD_CS 4
 #endif
-#include <math.h>
 #include <ctype.h>
+#include <math.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #ifdef M5STACK_CORE2
@@ -42,7 +42,11 @@ const char* episode_title = "Pilot";
 const char* show_title = "Burn Notice";
 const unsigned char episode_number = 1;
 const unsigned char season_number = 1;
-const char* episode_description = "While on assignment, agent Michael Westen gets a \"Burn Notice\" and becomes untouchable. Having no idea what or who triggered his demise, Michael returns to his hometown, Miami, determined to find out the reason for his sudden termination.";
+const char* episode_description =
+    "While on assignment, agent Michael Westen gets a \"Burn Notice\" and "
+    "becomes untouchable. Having no idea what or who triggered his demise, "
+    "Michael returns to his hometown, Miami, determined to find out the reason "
+    "for his sudden termination.";
 static void httpd_send_block(const char* data, size_t len, void* arg);
 static void httpd_send_expr(int expr, void* arg);
 static void httpd_send_expr(unsigned char expr, void* arg);
@@ -155,16 +159,16 @@ static WIFI_STATUS wifi_status() {
 static httpd_handle_t httpd_handle = nullptr;
 static SemaphoreHandle_t httpd_ui_sync = nullptr;
 
-static char *httpd_url_encode(char *enc, size_t size, const char *s, const char *table){
+static char* httpd_url_encode(char* enc, size_t size, const char* s,
+                              const char* table) {
     char* result = enc;
-    if(table==NULL) table = enc_rfc3986;
-    for (; *s; s++){
-        if (table[(int)*s]) { 
+    if (table == NULL) table = enc_rfc3986;
+    for (; *s; s++) {
+        if (table[(int)*s]) {
             *enc++ = table[(int)*s];
             --size;
-        }
-        else {
-            snprintf( enc,size, "%%%02X", *s);
+        } else {
+            snprintf(enc, size, "%%%02X", *s);
             while (*++enc) {
                 --size;
             }
@@ -172,49 +176,50 @@ static char *httpd_url_encode(char *enc, size_t size, const char *s, const char 
     }
     return result;
 }
-static const char* httpd_crack_query(const char* next_query_part, char* out_name, size_t name_size,
+static const char* httpd_crack_query(const char* next_query_part,
+                                     char* out_name, size_t name_size,
                                      char* out_value, size_t value_size) {
-        if (!*next_query_part) return NULL;
+    if (!*next_query_part) return NULL;
 
-        const char start = *next_query_part;
-        if (start == '&' || start == '?') {
-            ++next_query_part;
-        }
-        size_t i = 0;
-        char* name_cur = out_name;
-        while (*next_query_part && *next_query_part != '=' &&
-                *next_query_part != '&' && *next_query_part != ';') {
-            if (i < name_size) {
-                *name_cur++ = *next_query_part;
-            }
-            ++next_query_part;
-            ++i;
-        }
-        if (name_size) {
-            *name_cur = '\0';
-        }
-        if (!*next_query_part || *next_query_part == '&' ||
-            *next_query_part == ';') {
-            if (value_size) {
-                *out_value = '\0';
-            }
-            return next_query_part;
+    const char start = *next_query_part;
+    if (start == '&' || start == '?') {
+        ++next_query_part;
+    }
+    size_t i = 0;
+    char* name_cur = out_name;
+    while (*next_query_part && *next_query_part != '=' &&
+           *next_query_part != '&' && *next_query_part != ';') {
+        if (i < name_size) {
+            *name_cur++ = *next_query_part;
         }
         ++next_query_part;
-        i = 0;
-        char* value_cur = out_value;
-        while (*next_query_part && *next_query_part != '&' &&
-                *next_query_part != ';') {
-            if (i < value_size) {
-                *value_cur++ = *next_query_part;
-            }
-            ++next_query_part;
-            ++i;
-        }
+        ++i;
+    }
+    if (name_size) {
+        *name_cur = '\0';
+    }
+    if (!*next_query_part || *next_query_part == '&' ||
+        *next_query_part == ';') {
         if (value_size) {
-            *value_cur = '\0';
+            *out_value = '\0';
         }
         return next_query_part;
+    }
+    ++next_query_part;
+    i = 0;
+    char* value_cur = out_value;
+    while (*next_query_part && *next_query_part != '&' &&
+           *next_query_part != ';') {
+        if (i < value_size) {
+            *value_cur++ = *next_query_part;
+        }
+        ++next_query_part;
+        ++i;
+    }
+    if (value_size) {
+        *value_cur = '\0';
+    }
+    return next_query_part;
 }
 static void httpd_parse_url(const char* url) {
     const char* query = strchr(url, '?');
@@ -222,7 +227,8 @@ static void httpd_parse_url(const char* url) {
     char value[64];
     if (query != nullptr) {
         while (1) {
-            query = httpd_crack_query(query, name, sizeof(name), value, sizeof(value));
+            query = httpd_crack_query(query, name, sizeof(name), value,
+                                      sizeof(value));
             if (!query) {
                 break;
             }
@@ -230,34 +236,49 @@ static void httpd_parse_url(const char* url) {
         }
     }
 }
-static void httpd_send_chunked(void* arg,
-                               const char* buffer, size_t buffer_len) {
-    httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
+// static void httpd_send_chunked(void* arg, const char* buffer,
+//                                size_t buffer_len) {
+//     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
+//     char buf[64];
+//     int fd = resp_arg->fd;
+//     if (buffer && buffer_len) {
+//         itoa(buffer_len, buf, 16);
+//         strcat(buf, "\r\n");
+//         if (fd > -1) {
+//             httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
+//             httpd_socket_send(hd, fd, buf, strlen(buf), 0);
+//             httpd_socket_send(hd, fd, buffer, buffer_len, 0);
+//             httpd_socket_send(hd, fd, "\r\n", 2, 0);
+//         } else {
+//             httpd_req_t* r = (httpd_req_t*)resp_arg->handle;
+//             httpd_send(r, buf, strlen(buf));
+//             httpd_send(r, buffer, buffer_len);
+//             httpd_send(r, "\r\n", 2);
+//         }
+//         return;
+//     }
+//     if (fd > -1) {
+//         httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
+//         httpd_socket_send(hd, fd, "0\r\n\r\n", 5, 0);
+//     } else {
+//         httpd_req_t* r = (httpd_req_t*)resp_arg->handle;
+//         httpd_send(r, "0\r\n\r\n", 5);
+//     }
+// }
+static void httpd_send_chunked(void* arg, const char* buffer,
+                               size_t buffer_len) {
     char buf[64];
-    int fd = resp_arg->fd;
-    if (buffer && buffer_len) {
-        itoa(buffer_len, buf, 16);
-        strcat(buf, "\r\n");
-        if(fd>-1) {
-            httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
-            httpd_socket_send(hd, fd, buf, strlen(buf), 0);
-            httpd_socket_send(hd, fd, buffer, buffer_len, 0);
-            httpd_socket_send(hd, fd, "\r\n", 2, 0);
-        } else {
-            httpd_req_t* r=(httpd_req_t*)resp_arg->handle;
-            httpd_send(r,buf,strlen(buf));
-            httpd_send(r,buffer,buffer_len);
-            httpd_send(r,"\r\n",2);
+    if (buffer) {
+        if(buffer_len) {
+            itoa(buffer_len, buf, 16);
+            strcat(buf, "\r\n");
+            httpd_send_block(buf,strlen(buf),arg);
+            httpd_send_block(buffer,buffer_len,arg);
+            httpd_send_block("\r\n",2,arg);
         }
         return;
     }
-    if(fd>-1) {
-        httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
-        httpd_socket_send(hd, fd, "0\r\n\r\n", 5, 0);
-    } else {
-        httpd_req_t* r=(httpd_req_t*)resp_arg->handle;
-        httpd_send(r,"0\r\n\r\n",5);    
-    }
+    httpd_send_block("0\r\n\r\n", 5, arg);
 }
 
 static void httpd_send_block(const char* data, size_t len, void* arg) {
@@ -266,12 +287,12 @@ static void httpd_send_block(const char* data, size_t len, void* arg) {
     }
     httpd_async_resp_arg* resp_arg = (httpd_async_resp_arg*)arg;
     int fd = resp_arg->fd;
-    if(fd>-1) {
+    if (fd > -1) {
         httpd_handle_t hd = (httpd_handle_t)resp_arg->handle;
         httpd_socket_send(hd, fd, data, len, 0);
     } else {
-        httpd_req_t* r=(httpd_req_t*)resp_arg->handle;
-        httpd_send(r,data,len);    
+        httpd_req_t* r = (httpd_req_t*)resp_arg->handle;
+        httpd_send(r, data, len);
     }
 }
 static void httpd_send_expr(int expr, void* arg) {
@@ -282,15 +303,15 @@ static void httpd_send_expr(int expr, void* arg) {
 static void httpd_send_expr(float expr, void* arg) {
     char buf[64] = {0};
     sprintf(buf, "%0.2f", expr);
-    for(size_t i = sizeof(buf)-1;i>0;--i) {
+    for (size_t i = sizeof(buf) - 1; i > 0; --i) {
         char ch = buf[i];
-        if(ch=='0' || ch=='.') {
-            buf[i]='\0'; 
-            if(ch=='.') {
+        if (ch == '0' || ch == '.') {
+            buf[i] = '\0';
+            if (ch == '.') {
                 break;
             }
-        } else if(ch!='\0') {
-             break;
+        } else if (ch != '\0') {
+            break;
         }
     }
     httpd_send_chunked(arg, buf, strlen(buf));
@@ -311,90 +332,89 @@ static esp_err_t httpd_request_handler(httpd_req_t* req) {
     int handler_index = httpd_response_handler_match(req->uri);
     httpd_async_resp_arg resp_arg_data;
     httpd_async_resp_arg* resp_arg;
-    if(req->method==HTTP_GET) { // async
-        resp_arg =
-            (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
-        if (resp_arg == nullptr) { // no memory
+    if (req->method == HTTP_GET) {  // async
+        resp_arg = (httpd_async_resp_arg*)malloc(sizeof(httpd_async_resp_arg));
+        if (resp_arg == nullptr) {  // no memory
             // we can still do it synchronously
             goto synchronous;
         }
-        strncpy(resp_arg->uri,req->uri,sizeof(req->uri));
+        strncpy(resp_arg->uri, req->uri, sizeof(req->uri));
         resp_arg->handle = req->handle;
         resp_arg->method = req->method;
         resp_arg->fd = httpd_req_to_sockfd(req);
-        if (resp_arg->fd < 0) { // error getting socket
+        if (resp_arg->fd < 0) {  // error getting socket
             free(resp_arg);
             goto error;
         }
         httpd_work_fn_t handler_fn;
-        if(handler_index==-1) {
+        if (handler_index == -1) {
             // no match, send a 404
             handler_fn = httpd_content_404_clasp;
         } else {
             // choose the handler
-            handler_fn = (httpd_work_fn_t)httpd_response_handlers[handler_index].handler;
+            handler_fn =
+                (httpd_work_fn_t)httpd_response_handlers[handler_index].handler;
         }
         // and off we go.
         httpd_queue_work(req->handle, handler_fn, resp_arg);
         return ESP_OK;
-    } 
+    }
 synchronous:
     // must do it synchronously
     resp_arg_data.fd = -1;
     resp_arg_data.handle = req;
     resp_arg_data.method = req->method;
-    strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
+    strncpy(resp_arg_data.uri, req->uri, sizeof(req->uri));
     resp_arg = &resp_arg_data;
-    if(handler_index==-1) {
+    if (handler_index == -1) {
         httpd_content_404_clasp(resp_arg);
     } else {
         httpd_response_handlers[handler_index].handler(resp_arg);
     }
     return ESP_OK;
-    
+
 error:
     // allocate a resp arg on the stack, fill it with our info
     // and send a 500
     resp_arg_data.fd = -1;
     resp_arg_data.handle = req;
     resp_arg_data.method = req->method;
-    strncpy(resp_arg_data.uri,req->uri,sizeof(req->uri));
+    strncpy(resp_arg_data.uri, req->uri, sizeof(req->uri));
     resp_arg = &resp_arg_data;
     httpd_content_500_clasp(resp_arg);
     return ESP_OK;
 }
 static bool httpd_match(const char* cmp, const char* uri, size_t len) {
-    return true; // match anything.
+    return true;  // match anything.
 }
 static void httpd_init() {
     httpd_ui_sync = xSemaphoreCreateMutex();
     if (httpd_ui_sync == nullptr) {
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     }
-    for (int i = 0; i < 256; i++){
-
-        enc_rfc3986[i] = isalnum( i) || i == '~' || i == '-' || i == '.' || i == '_' ? i : 0;
-        enc_html5[i] = isalnum( i) || i == '*' || i == '-' || i == '.' || i == '_' ? i : (i == ' ') ? '+' : 0;
+    for (int i = 0; i < 256; i++) {
+        enc_rfc3986[i] =
+            isalnum(i) || i == '~' || i == '-' || i == '.' || i == '_' ? i : 0;
+        enc_html5[i] =
+            isalnum(i) || i == '*' || i == '-' || i == '.' || i == '_' ? i
+            : (i == ' ')                                               ? '+'
+                                                                       : 0;
     }
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_uri_handlers = 2;
     config.server_port = 80;
     config.max_open_sockets = (CONFIG_LWIP_MAX_SOCKETS - 3);
-    config.uri_match_fn = httpd_match;    
+    config.uri_match_fn = httpd_match;
     ESP_ERROR_CHECK(httpd_start(&httpd_handle, &config));
-    httpd_uri_t handler = {
-        .uri = "/",
-        .method = HTTP_GET,
-        .handler = httpd_request_handler,
-        .user_ctx = nullptr
-    };
+    httpd_uri_t handler = {.uri = "/",
+                           .method = HTTP_GET,
+                           .handler = httpd_request_handler,
+                           .user_ctx = nullptr};
     ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
-    handler = {
-        .uri = "/",
-        .method = HTTP_POST,
-        .handler = httpd_request_handler,
-        .user_ctx = nullptr
-    };
+    handler = {.uri = "/",
+               .method = HTTP_POST,
+               .handler = httpd_request_handler,
+               .user_ctx = nullptr};
     ESP_ERROR_CHECK(httpd_register_uri_handler(httpd_handle, &handler));
 }
 static void httpd_end() {

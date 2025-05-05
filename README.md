@@ -536,20 +536,22 @@ void response_block(const char* buffer, size_t buffer_len, void* response_state)
     send(socket_descriptor, buffer, buffer_len, 0);
 }
 // send an HTTP chunked response, or buffer = NULL for the terminator
-static void response_send_chunked(const char* buffer, size_t buffer_len, void* response_state) {
+static void response_send_chunked(const char* buffer,
+                               size_t buffer_len, void* response_state_) {
     char buf[64];
     if (buffer) {
         if(buffer_len) {
             itoa(buffer_len, buf, 16);
             strcat(buf, "\r\n");
-            reponse_block(buf,strlen(buf),response_state);
-            reponse_block(buffer,strlen(buf),response_state);
-            reponse_block("\r\n", 2,response_state);    
+            responnse_block(buf,strlen(buf), response_state);
+            responnse_block(buffer,buffer_len, response_state);
+            responnse_block("\r\n",2, response_state);
         }
         return;
     }
-    response_block("0\r\n\r\n", 5, response_state);
+    responnse_block("0\r\n\r\n", 5, response_state);
 }
+
 // these expression overloads transform to a string and then send chunked
 void response_expr(const char* expr, void* response_state) {
     if (!expr || !*expr) {
