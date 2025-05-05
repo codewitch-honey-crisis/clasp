@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /win32_www/build
 /posix_www/build
 /esp32_www/data/wifi.txt
+/clasptree/debug.jpg
