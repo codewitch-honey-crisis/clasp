@@ -10,7 +10,7 @@
     },
     "help": {
       "commandName": "Project",
-      "commandLineArgs": "/?"
+      "commandLineArgs": "--?"
     }
   }
 }

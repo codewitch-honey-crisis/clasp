@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v8.0": {
-      "clasp/0.4.0.0": {
+      "clasp/0.5.0.0": {
         "runtime": {
           "clasp.dll": {}
         }
@@ -14,7 +14,7 @@
     }
   },
   "libraries": {
-    "clasp/0.4.0.0": {
+    "clasp/0.5.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

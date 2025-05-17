@@ -2,7 +2,7 @@
   "profiles": {
     "help": {
       "commandName": "Project",
-      "commandLineArgs": "/?"
+      "commandLineArgs": "--?"
     },
     "page demo": {
       "commandName": "Project",
@@ -10,15 +10,15 @@
     },
     "static demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\static.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr"
+      "commandLineArgs": "..\\..\\..\\static.clasp --state resp_arg --block httpd_send_block --expr httpd_send_expr"
     },
     "json demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\json.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr"
+      "commandLineArgs": "..\\..\\..\\json.clasp --state resp_arg --block httpd_send_block --expr httpd_send_expr"
     },
     "404 demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\404.clasp /state resp_arg /block httpd_send_block /expr httpd_send_expr /headers required"
+      "commandLineArgs": "..\\..\\..\\404.clasp --state resp_arg --block httpd_send_block --expr httpd_send_expr --headers required"
     }
   }
 }

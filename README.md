@@ -131,21 +131,21 @@ Generates C code from ASPish pages for use with embedded web servers
 
 Usage:
 
-clasp <inputfile> [ <outputfile> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /nostatus ]
-    [ /headers <headers> ] [ /compress <compress> ]
+clasp <inputfile> [ <outputfile> ] [ --block <block> ] [ --expr <expr> ] [ --state <state> ] [ --nostatus ]
+    [ --headers <headers> ] [ --compress <compress> ]
 
 <inputfile>      The input file
 <outputfile>     The output file. Defaults to <stdout>
 <block>          The function call to send a literal block to the client. Defaults to response_block
 <expr>           The function call to send an expression to the client. Defaults to response_expr
 <state>          The variable name that holds the user state to pass to the response functions. Defaults to response_state
-/nostatus        Suppress the status line
+--nostatus       Suppress the status line
 <headers>        Indicates which headers should be generated (auto, or none). Defaults to auto
 <compress>       Indicates the type of compression to use on static content: none, gzip, deflate, or auto. Defaults to auto
 
-clasp /?
+clasp --?
 
-/?               Displays this screen
+--?              Displays this screen
 ```
 
 - The `<inputfile>` is the `.clasp` document to process, following the earlier described syntax.
@@ -158,13 +158,13 @@ clasp /?
 
 - `<state>` indicates the name of the (`void*`) state variable that's passed around to the functions. It is a user defined context variable that may be a struct of some kind, or may be as simple as a socket handle. Whatever it is, the implementation of the `<block>` method will use it to resolve the write to the actual socket or whatever HTTP transport you're using. It defaults to `response_state`.
 
-- `/nostatus` indicates that the HTTP status line should be suppressed. This allows you to prepend your own status, plus potentially additional HTTP headers before the generated content.
+- `--nostatus` indicates that the HTTP status line should be suppressed. This allows you to prepend your own status, plus potentially additional HTTP headers before the generated content.
 
 - `<headers>` indicates how to generate the headers. `auto` means the potentially necessary headers `Content-Length`, `Transfer-Encoding` or `Content-Encoding` are generated for you as necessary. `none` means no headers are generated for you.
 
 - `<compress>` indicates how to compress content when it is possible. Dynamic content cannot be precompressed, but `.clasp` pages containing only directives but no code or expression blocks - that is, static `.clasp` pages - can be compressed using deflate or gzip compression to save on program size and transport traffic. By default this is `auto` which indicates that whichever method yields the smallest result will be chosen. `none` indicates that content should never be compressed. The other options indicate a specific type of compression to use.
 
-The `/?` option must be specified by itself and simply displays the above screen.
+The `--?` option must be specified by itself and simply displays the above screen.
 
 <a name="2.4"></a>
 ## Using ClASP generated code
@@ -313,22 +313,22 @@ Generates C code to send static content over an HTTP connected socket
 
 Usage:
 
-clstat <input> [ <output> ] [ /code <code> ] [ /status <status> ] [ /nostatus ] [ /type <type> ]
-    [ /compress <compress> ] [ /block <block> ] [ /state <state> ]
+clstat <input> [ <output> ] [ --code <code> ] [ --status <status> ] [ --nostatus ] [ --type <type> ]
+    [ --compress <compress> ] [ --block <block> ] [ --state <state> ]
 
 <input>        The input file to process.
 <output>       The output to produce. Defaults to <stdout>
 <code>         Indicates the HTTP status code. Defaults to 200
 <status>       Indicates the HTTP status text. Defaults to OK
-/nostatus      Indicates that the HTTP status line should be surpressed
+--nostatus     Indicates that the HTTP status line should be surpressed
 <type>         Indicates the content type of the data. If unspecified it is determined from the file extension
 <compress>     Indicates the type of compression to use: none, gzip, deflate, or auto. Defaults to auto
 <block>        The function call to send a literal block to the client. Defaults to response_block
 <state>        The variable name that holds the user state to pass to the response functions. Defaults to response_state
 
-clstat /?
+clstat --?
 
-/?             Displays this screen
+--?            Displays this screen
 ```
 - `<input>` indicates the input file to process
 
@@ -338,7 +338,7 @@ clstat /?
 
 - `<status>` indicates the HTTP status text to emit
 
-- `/nostatus` indicates that the status line should be supressed, allowing for custom status lines and/or additional headers to be injected
+- `--nostatus` indicates that the status line should be supressed, allowing for custom status lines and/or additional headers to be injected
 
 - `<type>` indicates the MIME type of the content. By default the content type is determined based on the file extension.
 
@@ -348,7 +348,7 @@ clstat /?
 
 - `<state>` indicates the user defined context value to pass along to `response_block`. Defaults to `response_state`
 
-The /? option must be specified by itself and simply displays the above screen.
+The --? option must be specified by itself and simply displays the above screen.
 
 <a name="3.3"></a>
 ## Using ClStat generated code
@@ -445,9 +445,9 @@ Generates dynamic ClASP content and static content from a directory tree
 
 Usage:
 
-clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <state> ] [ /prefix <prefix> ]
-    [ /prologue <prologue> ] [ /epilogue <epilogue> ] [ /handlers <handlers> ] [ /index <index> ] [ /nostatus ]
-    [ /handlerfsm ] [ /urlmap <urlmap> ]
+clasptree <input> [ <output> ] [ --block <block> ] [ --expr <expr> ] [ --state <state> ] [ --prefix <prefix> ]
+    [ --prologue <prologue> ] [ --epilogue <epilogue> ] [ --handlers <handlers> ] [ --index <index> ] [ --nostatus ]
+    [ --handlerfsm ] [ --urlmap <urlmap> ]
 
 <input>         The root directory of the site. Defaults to the current directory
 <output>        The output file to generate. Defaults to <stdout>
@@ -461,13 +461,13 @@ clasptree <input> [ <output> ] [ /block <block> ] [ /expr <expr> ] [ /state <sta
         handlers. None doesn't emit any. Default emits them in accordance with their paths, plus resoving indexes based
         on <index>. Extended does this and also adds path/ trailing handlers
 <index>         Generate / default handlers for files matching this wildcard. Defaults to "index.*"
-/nostatus       Suppress the status headers
-/handlerfsm     Generate a finite state machine that can be used for matching headers
+--nostatus      Suppress the status headers
+--handlerfsm    Generate a finite state machine that can be used for matching headers
 <urlmap>        Generates handler mappings from a map file. <headersfsm> must be specified
 
-clasptree /?
+clasptree --?
 
-/?              Displays this screen
+--?             Displays this screen
 ```
 - `<input>` indicates the folder that is the root directory of the website content. This is basically your wwwroot for your website.
 
@@ -489,13 +489,13 @@ clasptree /?
 
 - `<index>` indicates the filesystem wildcard match to use for default files. This option defaults to `index.*` such that any file named `index` will have a default path associated with it as described in `<handlers>` just above.
 
-- `/nostatus` indicates that the HTTP status line is to be omitted from generated content. This allows your code to insert additional HTTP headers and custom status lines for each bit of content.
+- `--nostatus` indicates that the HTTP status line is to be omitted from generated content. This allows your code to insert additional HTTP headers and custom status lines for each bit of content.
 
-- `/handlerfsm` indicates that a finite state machine and corresponding `int response_handler_match(const char* path_and_query)` should be generated that can be used to match incoming requests to the appropriate content handler. (see [section 4.1.3](#4.1.3))
+- `--handlerfsm` indicates that a finite state machine and corresponding `int response_handler_match(const char* path_and_query)` should be generated that can be used to match incoming requests to the appropriate content handler. (see [section 4.1.3](#4.1.3))
 
-- `/urlmap` indicates a map file which will be used to create additional routing for custom URLs for the handler FSM. (see [section 4.1.4](#4.1.4))
+- `<urlmap>` indicates a map file which will be used to create additional routing for custom URLs for the handler FSM. (see [section 4.1.4](#4.1.4))
 
-- `/?` must be specified by itself and simply displays the above screen
+- `--?` must be specified by itself and simply displays the above screen
 
 
 <a name="4.3"></a>

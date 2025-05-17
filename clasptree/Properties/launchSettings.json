@@ -2,23 +2,23 @@
   "profiles": {
     "help": {
       "commandName": "Project",
-      "commandLineArgs": "/?"
+      "commandLineArgs": "--?"
     },
     "no status": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\esp32_www\\include\\httpd_content.h /prefix httpd_ /epilogue ..\\..\\..\\httpd_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /nostatus"
+      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\esp32_www\\include\\httpd_content.h --prefix httpd_ --epilogue ..\\..\\..\\httpd_epilogue.h --state resp_arg --block httpd_send_block --expr httpd_send_expr --handlers extended --nostatus"
     },
     "esp32 demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\esp32_www\\include\\httpd_content.h /prefix httpd_ /epilogue ..\\..\\..\\httpd_epilogue.h /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /handlerfsm /urlmap ..\\..\\..\\httpd_map.map"
+      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\esp32_www\\include\\httpd_content.h --prefix httpd_ --epilogue ..\\..\\..\\httpd_epilogue.h --state resp_arg --block httpd_send_block --expr httpd_send_expr --handlers extended --handlerfsm --urlmap ..\\..\\..\\httpd_map.map"
     },
     "win32 demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\win32_www\\include\\httpd_content.h /prefix httpd_ /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /handlerfsm"
+      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\win32_www\\include\\httpd_content.h --prefix httpd_ --state resp_arg --block httpd_send_block --expr httpd_send_expr --handlers extended --handlerfsm"
     },
     "posix demo": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\posix_www\\include\\httpd_content.h /prefix httpd_ /state resp_arg /block httpd_send_block /expr httpd_send_expr /handlers extended /handlerfsm"
+      "commandLineArgs": "..\\..\\..\\www ..\\..\\..\\..\\posix_www\\include\\httpd_content.h --prefix httpd_ --state resp_arg --block httpd_send_block --expr httpd_send_expr --handlers extended --handlerfsm"
     }
   }
 }

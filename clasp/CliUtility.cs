@@ -1627,14 +1627,8 @@ namespace Cli
 		{
 			get
 			{
-				try
-				{
-					return IsWindows ? "/" : "--";
-				}
-				catch
-				{
-					return "--";
-				}
+				return "--";
+				
 			}
 		}
 		/// <summary>
