@@ -460,6 +460,8 @@ namespace clasptree
                 }
                 var files = new Dictionary<string, FileSystemInfo>();
                 var includes = new StringBuilder();
+                includes.Append("#include <stdint.h>\r\n");
+                includes.Append("#include <stddef.h>\r\n");
                 for (int i = 0; i < fia.Length; i++)
                 {
                     var fi = fia[i];
