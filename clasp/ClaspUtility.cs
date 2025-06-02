@@ -30,7 +30,9 @@ namespace clasp
 						sb.Append("\\n"); break;
 					case '\t':
 						sb.Append("\\t"); break;
-					default:
+					case '\\':
+                        sb.Append("\\\\"); break;
+                    default:
 						if (b >= ' ' && b < 128)
 						{
 							sb.Append((char)b);
