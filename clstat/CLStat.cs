@@ -62,7 +62,7 @@ namespace clstat
 				string txtStr = null;
 				if (txt)
 				{
-					txtStr = new StreamReader(stm, Encoding.ASCII).ReadToEnd();
+					txtStr = new StreamReader(stm, Encoding.UTF8).ReadToEnd();
 
 				}
 				var len = txt ? txtStr.Length : checked((int)stm.Length);

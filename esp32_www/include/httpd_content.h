@@ -3,6 +3,8 @@
 #ifndef HTTPD_CONTENT_H
 #define HTTPD_CONTENT_H
 
+#include <stdint.h>
+#include <stddef.h>
 #include "httpd_application.h"
 
 #define HTTPD_RESPONSE_HANDLER_COUNT 7

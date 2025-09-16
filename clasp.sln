@@ -31,6 +31,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bin", "bin", "{542D8DDB-439
 		bin\clstat.runtimeconfig.json = bin\clstat.runtimeconfig.json
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "py", "py", "{B6A3CE0E-EADA-4E18-A854-EBE88204F6D2}"
+	ProjectSection(SolutionItems) = preProject
+		py\clasp.py = py\clasp.py
+		py\clasptree.py = py\clasptree.py
+		py\clstat.py = py\clstat.py
+		py\visualfa.py = py\visualfa.py
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,5 +63,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{542D8DDB-4392-4038-AC9A-589D27BEB120} = {6D621E6F-DDE4-4CE2-81D9-6700785C7524}
+		{B6A3CE0E-EADA-4E18-A854-EBE88204F6D2} = {6D621E6F-DDE4-4CE2-81D9-6700785C7524}
 	EndGlobalSection
 EndGlobal

@@ -39,7 +39,7 @@ namespace clasptree
         static string index = "index.*";
         [CmdArg(Name = "nostatus", ElementName = "nostatus", Optional = true, Description = "Suppress the status headers")]
         public static bool nostatus = false;
-        [CmdArg(Name = "handlerfsm", ElementName = "handlerfsm", Optional = true, Description = "Generate a finite state machine that can be used for matching headers")]
+        [CmdArg(Name = "handlerfsm", ElementName = "handlerfsm", Optional = true, Description = "Generate a finite state machine that can be used for matching handlers")]
         public static bool handlerfsm = false;
         [CmdArg(Name = "urlmap", ElementName = "urlmap", Optional = true, Description = "Generates handler mappings from a map file. <headersfsm> must be specified")]
         public static TextReader urlmap = null;
@@ -328,7 +328,7 @@ namespace clasptree
                         {
                             if (val.Min == 0 && val.Max == 1114111)
                             {
-                                for (var j = 0; j <= 128; ++j)
+                                for (var j = 0; j < 128; ++j)
                                 {
                                     inputs.Add(j);
                                 }
@@ -416,8 +416,6 @@ namespace clasptree
             s = s.Replace("TYPE", width == 4 ? "INT32" : width == 1 ? "INT8" : "INT16");
             s = FsmReplaceTypes(s);
             output.Write(s);
-
-
         }
         static int Main(string[] args)
         {
