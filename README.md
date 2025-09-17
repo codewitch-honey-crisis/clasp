@@ -543,13 +543,13 @@ static void response_send_chunked(const char* buffer,
         if(buffer_len) {
             itoa(buffer_len, buf, 16);
             strcat(buf, "\r\n");
-            responnse_block(buf,strlen(buf), response_state);
-            responnse_block(buffer,buffer_len, response_state);
-            responnse_block("\r\n",2, response_state);
+            response_block(buf,strlen(buf), response_state);
+            response_block(buffer,buffer_len, response_state);
+            response_block("\r\n",2, response_state);
         }
         return;
     }
-    responnse_block("0\r\n\r\n", 5, response_state);
+    response_block("0\r\n\r\n", 5, response_state);
 }
 
 // these expression overloads transform to a string and then send chunked
