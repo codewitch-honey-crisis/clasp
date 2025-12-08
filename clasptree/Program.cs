@@ -610,8 +610,6 @@ namespace clasptree
                 if (handlers != HandlersMode.none)
                 {
                     indout.Write($"#define {prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT {handlersList.Count + mapList.Count}\r\n");
-                    indout.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
-                    indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT];\r\n");
                 }
 
 
@@ -619,6 +617,12 @@ namespace clasptree
                 indout.Write("extern \"C\" {\r\n");
                 indout.Write("#endif\r\n");
                 indout.Write("\r\n");
+                if (handlers != HandlersMode.none)
+                {
+                    indout.Write($"typedef struct {{ const char* path; const char* path_encoded; void (* handler) (void* arg); }} {prefix}response_handler_t;\r\n");
+                    indout.Write($"extern {prefix}response_handler_t {prefix}response_handlers[{prefix.ToUpperInvariant()}RESPONSE_HANDLER_COUNT];\r\n");
+
+                }
                 foreach (var f in files)
                 {
                     var mname = f.Value.FullName.Substring(input.FullName.Length + 1).Replace(Path.DirectorySeparatorChar, '/'); ;

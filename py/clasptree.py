@@ -674,15 +674,15 @@ def run():
             handlersList.append(("/" + mname, "/" + pathUrlEncode(mname), f"{cmdargs.prefix}content_{f[0]}"))
         
         handlersList.sort(key=lambda x: x[0])
-
+ 
         emit(f"#define {cmdargs.prefix.upper()}RESPONSE_HANDLER_COUNT {len(handlersList) + len(mapList)}{eol}")
-        emit("typedef struct { const char* path; const char* path_encoded; void (* handler) (void* arg); } "+f"{cmdargs.prefix}response_handler_t;{eol}")
-        emit(f"extern {cmdargs.prefix}response_handler_t {cmdargs.prefix}response_handlers[{cmdargs.prefix.upper()}RESPONSE_HANDLER_COUNT];{eol}")
-
+ 
         emit(f"#ifdef __cplusplus{eol}")
         emit("extern \"C\" {"+eol)
         emit(f"#endif{eol}")
         emit(eol)
+        emit("typedef struct { const char* path; const char* path_encoded; void (* handler) (void* arg); } "+f"{cmdargs.prefix}response_handler_t;{eol}")
+        emit(f"extern {cmdargs.prefix}response_handler_t {cmdargs.prefix}response_handlers[{cmdargs.prefix.upper()}RESPONSE_HANDLER_COUNT];{eol}")
 
         for f in files.items():
             p = os.path.relpath(f[1],os.path.abspath(cmdargs.input)).replace(os.path.sep, '/')
