@@ -324,7 +324,7 @@ static esp_err_t httpd_request_handler(httpd_req_t* req) {
             handler_fn = httpd_content_404_clasp;
         } else {
             // choose the handler
-            handler_fn =
+            handler_fn = 
                 (httpd_work_fn_t)httpd_response_handlers[handler_index].handler;
         }
         // and off we go.

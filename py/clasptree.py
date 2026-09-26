@@ -1,5 +1,5 @@
 import argparse
-from visualfa import FA, FARange, FAProgress, FACharacterClasses, FATransition
+from luthor import CodepointDfa, DfaState, Builder, compile_dfa, fsm_escape
 from urllib.parse import quote
 import os
 from glob import glob
@@ -28,110 +28,24 @@ cmdargParser.add_argument("-I","--indent", required=False,default=0, help = "Ind
 cmdargParser.add_argument("-l","--eol",required=False,default="unix",help="Indicates the style of line ending to use, either \"windows\", \"unix\" or \"apple\"",type=str)
 cmdargs = cmdargParser.parse_args()
 
-res_c_runner = """int adv = 0;
-int tlen;
-TYPE tto;
-TYPE prlen;
-TYPE pcmp;
-int i, j;
-int ch;
-TYPE state = 0;
-TYPE acc = -1;
-bool done;
-bool result;
-ch = (path_and_query[adv]=='\\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
-while (ch != -1) {
-	result = false;
-	acc = -1;
-	done = false;
-	while (!done) {
-	start_dfa:
-		done = true;
-		acc = fsm_data[state++];
-		tlen = fsm_data[state++];
-		for (i = 0; i < tlen; ++i) {
-			tto = fsm_data[state++];
-			prlen = fsm_data[state++];
-			for (j = 0; j < prlen; ++j) {
-				pcmp = fsm_data[state++];
-				if (ch < pcmp) {
-					state += (prlen - (j + 1));
-					break;
-				}
-				if (ch == pcmp) {
-					result = true;
-					ch = (path_and_query[adv] == '\\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
-					state = tto;
-					done = false;
-					goto start_dfa;
-				}
-			}
-		}
-		if (acc != -1 && result) {
-			if (path_and_query[adv]=='\\0' || path_and_query[adv]=='?') {
-				return (int)acc;
-			}
-			return -1;
-		}
-		ch = (path_and_query[adv] == '\\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
-		state = 0;
-	}
+res_c_runner = """const unsigned char* s = (const unsigned char*)path_and_query;
+int state = 1, accept = -1, bol = 1;
+for (;; s++) {
+	int at_end = *s == '\\0' || *s == '?';
+	if (bol && fsm_data[state + 1] != -1) state = fsm_data[state + 1];                         /* ^ */
+	if ((at_end || *s == fsm_data[0]) && fsm_data[state + 2] != -1) state = fsm_data[state + 2];     /* $ */
+	if (at_end) return fsm_data[state];
+	int c = *s, next = -1;
+	const TYPE* r = fsm_data + state + 4;
+	for (int k = 0; k < fsm_data[state + 3] && c >= r[0]; k++, r += 3)
+		if (c <= r[1]) { next = r[2]; break; }
+	if (next == -1) break;
+	state = next;
+	bol = (c == fsm_data[0]);
 }
-return -1;
+return accept;
 """
-res_c_runner_ranges = """int adv = 0;
-int tlen;
-TYPE tto;
-TYPE prlen;
-TYPE pmin;
-TYPE pmax;
-int i, j;
-int ch;
-TYPE state = 0;
-TYPE acc = -1;
-bool done;
-bool result;
-ch = (path_and_query[adv]=='\\0'||path_and_query[adv]=='?') ? -1 : path_and_query[adv++];
-while (ch != -1) {
-	result = false;
-	acc = -1;
-	done = false;
-	while (!done) {
-	start_dfa:
-		done = true;
-		acc = fsm_data[state++];
-		tlen = fsm_data[state++];
-		for (i = 0; i < tlen; ++i) {
-			tto = fsm_data[state++];
-			prlen = fsm_data[state++];
-			for (j = 0; j < prlen; ++j) {
-				pmin = fsm_data[state++];
-				pmax = fsm_data[state++];
-				if (ch < pmin) {
-					state += ((prlen - (j + 1)) * 2);
-					break;
-				}
-				if (ch <= pmax) {
-					result = true;
-					ch = (path_and_query[adv] == '\\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
-					state = tto;
-					done = false;
-					goto start_dfa;
-				}
-			}
-		}
-		if (acc != -1 && result) {
-			if (path_and_query[adv]=='\\0' || path_and_query[adv]=='?') {
-				return (int)acc;
-			}
-			return -1;
-		}
-		ch = (path_and_query[adv] == '\\0' || path_and_query[adv] == '?') ? -1 : path_and_query[adv++];
-		state = 0;
-	}
-}
-return -1;
-"""
+
 def toSZLiteralBytes(data, startSpacing = 0):
     global eol
     length = len(data)
@@ -300,194 +214,23 @@ def fsmReplaceTypes(s):
     s = s.replace("INT32", "int32_t")
     return s
 
-def toRangeArray(fa):
-    working = []
-    closure = fa.fillClosure()
-    hasUnicode = False
-    stateIndices = [0]*len(closure)
-    # fill in the state information
-    i = 0
-    while i < len(stateIndices):
-        cfa = closure[i]
-        stateIndices[i] = len(working)
-        # add the accept
-        working.append(cfa.acceptSymbol)
-        itrgp = cfa.fillInputTransitionRangesGroupedByState(True)
-        # add the number of transitions
-        working.append(len(itrgp))
-        for itr in itrgp.items():
-            # We have to fill in the following after the fact
-            # We don't have enough info here
-            # for now just drop the state index as a placeholder
-            working.append(closure.index(itr[0]))
-            # add the number of packed ranges
-            working.append(len(itr[1]))
-            if hasUnicode == False:
-                for r in itr[1]:
-                    if r.min < 128 and r.max == 1114111:
-                        continue
-                    if r.min > 127 or r.max > 127:
-                        hasUnicode = True
-                        break
-            rng = FARange.toPacked(itr[1])
-            # add the packed ranges
-            for r in rng:
-                working.append(r)
-        i += 1
-    # if it's not unicode, do it again but map the upper ranges to be ASCII instead of UTF-32
-    if hasUnicode == False:
-        working.clear()
-        i = 0
-        while i < len(stateIndices):
-            cfa = closure[i]
-            stateIndices[i] = len(working)
-            working.append(cfa.acceptSymbol)
-            itrgp = cfa.fillInputTransitionRangesGroupedByState(True)
-            working.append(len(itrgp))
-            for itr in itrgp.items():
-                working.append(closure.index(itr[0]))
-                working.append(len(itr[1]))
-                rngs = []
-                if hasUnicode == False:
-                    for r in itr[1]:
-                        if r.min < 128 and r.max == 1114111:
-                            rngs.append(FARange(r.min, 127))
-                        else:
-                            rngs.append(r)
-                rng = FARange.toPacked(rngs)
-                # add the packed ranges
-                for r in rng:
-                    working.append(r)
-            i += 1
-    result = working
-    state = 0
-    # now fill in the state indices
-    while state < len(result):
-        state += 1
-        tlen = result[state]
-        state += 1
-        i = 0
-        while i < tlen:
-            # patch the destination
-            result[state] = stateIndices[result[state]]
-            state += 1
-            prlen = result[state]
-            state += 1
-            state += prlen * 2
-            i += 1
-        
-    return result
-
-def toNonRangeArray(fa):
-    working = []
-    closure = fa.fillClosure()
-    stateIndices = [0] * len(closure)
-    hasUnicode = False
-    # fill in the state information
-    i = 0
-    while i < len(stateIndices):
-        cfa = closure[i]
-        stateIndices[i] = len(working)
-        # add the accept
-        working.append(cfa.acceptSymbol)
-        itrgp = cfa.fillInputTransitionRangesGroupedByState(True)
-        # add the number of transitions
-        working.append(len(itrgp))
-        for itr in itrgp.items():
-            # We have to fill in the following after the fact
-            # We don't have enough info here
-            # for now just drop the state index as a placeholder
-            working.append(closure.index(itr[0]))
-            # add the number of single inputs computed from the packed ranges
-            inputs = set()
-            for val in itr[1]:
-                if val.min > 127 or (val.max > 127 and (val.min == 0 and val.max == 1114111)==False):
-                    hasUnicode = True
-                j = val.min
-                while j <= val.max:
-                    inputs.add(j)
-                    j += 1
-            working.append(len(inputs))
-            for inp in inputs:
-                working.append(inp)
-        i += 1
-    if hasUnicode == False:
-        working.clear()
-        i = 0
-        while i < len(stateIndices):
-            cfa = closure[i]
-            stateIndices[i] = len(working)
-            # add the accept
-            working.append(cfa.acceptSymbol)
-            itrgp = cfa.fillInputTransitionRangesGroupedByState(True)
-            # add the number of transitions
-            working.append(len(itrgp))
-            for itr in itrgp.items():
-                # We have to fill in the following after the fact
-                # We don't have enough info here
-                # for now just drop the state index as a placeholder
-                working.append(closure.index(itr[0]))
-                # add the number of single inputs computed from the packed ranges
-                inputs = set()
-                for val in itr[1]:
-                    if val.min == 0 and val.max == 1114111:
-                        j = 0
-                        while j < 128:
-                            inputs.add(j)
-                            j+=1
-                    else:
-                        j = val.min
-                        while j <= val.max:
-                            if j > 127:
-                                raise Exception("Invalid internal code")
-                            inputs.add(j)
-                            j += 1
-                working.append(len(inputs))
-                for inp in inputs:
-                    working.append(inp)
-            i += 1
-    result = working
-    state = 0
-    # now fill in the state indices
-    while state < len(result):
-        state += 1
-        tlen = result[state]
-        state += 1
-        i = 0
-        while i < tlen:
-            # patch the destination
-            result[state] = stateIndices[result[state]]
-            state += 1
-            prlen = result[state]
-            state += 1
-            state += prlen
-            i += 1
-    return result
-
 def emitFsm(handlers, maps):
     hfas = [None] * (len(handlers) + len(maps))
     i = 0
     while i < len(handlers):
         h = handlers[i]
-        hfas[i] = FA.literal(FA.toUtf32(h[1]), i)
+        hfas[i] = fsm_escape(h[1])
         i += 1
     i = 0
     while i < len(maps):
         if maps[i][1] == True:
-            hfas[i + len(handlers)] = FA.literal(maps[i][0], i + len(handlers))
+            hfas[i + len(handlers)] = fsm_escape(maps[i][0])
         else:
-            hfas[i + len(handlers)] = FA.parse(maps[i][0], i + len(handlers))
+            hfas[i + len(handlers)] = maps[i][0]
         i += 1
-    lexer = FA.toLexer(hfas, True)
-    
-    fsmData = toRangeArray(lexer)
-    rsrc = res_c_runner_ranges
-    nrfsmData = toNonRangeArray(lexer)
-    if len(nrfsmData) <= len(fsmData):
-        rsrc = res_c_runner
-        fsmData = nrfsmData
-        nrfsmData = None
-    
+    lexer = Builder.build(hfas, False)
+    fsmData = compile_dfa(lexer)
+    rsrc = res_c_runner
     width = fsmWidthBytes(fsmData)
     emit(f"static const {fsmWidthToSignedType(width)} fsm_data[] = {{")
     i = 0
@@ -512,6 +255,7 @@ def emitFsm(handlers, maps):
             case _:
                 s = line.replace("TYPE","INT32")
         s = fsmReplaceTypes(s)
+        s = s.replace("RULE_COUNT",str(len(hfas)))
         emit(s+eol)
 
 def run():

@@ -413,14 +413,14 @@ There are two pieces of data on each line, separated by a space. The first part 
 
 Comments start with `#` and continue to the rest of the line
 
-The regular expressions are simple DFA, so they cannot backtrack and lazy matching is not supported. The `^` and `$` anchors are always implicit, and cannot be specified explicitly.
+The regular expressions are simple DFA, so they cannot backtrack and lazy matching is generally supported but like RE/Flex will not handle certain complex cases as lazy, but rather greedy. The `$` anchor is always implicit
 
 
 Here is an example map file:
 
 ```
-.fs_api.clasp '(/api/spiffs/(.*))|(/api/sdcard/(.*))' # wildcard match for /api/spiffs/* or /api/sdcard/*
-index.clasp "/default.html" # literal alias to map /default.html to the content handler for index.clasp
+.fs_api.clasp '^(/api/spiffs/(.*))|(/api/sdcard/(.*))' # wildcard match for /api/spiffs/* or /api/sdcard/*
+index.clasp "^/default.html" # literal alias to map /default.html to the content handler for index.clasp
 ```
 Note that the content handler paths are relative to the website root folder.
 

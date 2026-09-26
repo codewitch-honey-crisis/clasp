@@ -1,5 +1,4 @@
 ﻿using Cli;
-using VisualFA;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Xml.Linq;
@@ -163,231 +162,64 @@ namespace clasptree
             s = s.Replace("INT32", "int32_t");
             return s;
         }
-        static int[] ToRangeArray(FA fa)
+        // Returns a pattern that matches exactly the given string. Metacharacters are escaped,
+        // common control characters use their short escapes (\n, \t, ...), and other control
+        // characters and unpaired surrogates use \x{H}, so the result is always one line.
+        static string FsmEscape(string literal)
         {
-            var working = new List<int>();
-            var closure = new List<FA>();
-            fa.FillClosure(closure);
-            var hasUnicode = false;
-            var stateIndices = new int[closure.Count];
-            // fill in the state information
-            for (var i = 0; i < stateIndices.Length; ++i)
+            ArgumentException.ThrowIfNullOrEmpty(literal); // an empty rule would match nothing useful
+            var sb = new StringBuilder(literal.Length + 8);
+            for (int i = 0; i < literal.Length; i++)
             {
-                var cfa = closure[i];
-                stateIndices[i] = working.Count;
-                // add the accept
-                working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
-                var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
-                // add the number of transitions
-                working.Add(itrgp.Count);
-                foreach (var itr in itrgp)
+                char c = literal[i];
+                switch (c)
                 {
-                    // We have to fill in the following after the fact
-                    // We don't have enough info here
-                    // for now just drop the state index as a placeholder
-                    working.Add(closure.IndexOf(itr.Key));
-                    // add the number of packed ranges
-                    working.Add(itr.Value.Count);
-                    if (!hasUnicode)
-                    {
-                        foreach (var r in itr.Value)
-                        {
-                            if (r.Min < 128 && r.Max == 1114111)
-                            {
-                                continue;
-                            }
-                            if (r.Min > 127 || r.Max > 127)
-                            {
-                                hasUnicode = true;
-                                break;
-                            }
-                        }
-                    }
-                    var rng = FARange.ToPacked(itr.Value);
-                    // add the packed ranges
-                    working.AddRange(rng);
+                    case '\\':
+                    case '"':
+                    case '/':
+                    case '^':
+                    case '$':
+                    case '.':
+                    case '|':
+                    case '?':
+                    case '*':
+                    case '+':
+                    case '(':
+                    case ')':
+                    case '[':
+                    case ']':
+                    case '{':
+                    case '}':
+                        sb.Append('\\').Append(c); break;
+                    case '\n': sb.Append(@"\n"); break;
+                    case '\r': sb.Append(@"\r"); break;
+                    case '\t': sb.Append(@"\t"); break;
+                    case '\f': sb.Append(@"\f"); break;
+                    case '\v': sb.Append(@"\v"); break;
+                    default:
+                        if (char.IsSurrogatePair(literal, i)) sb.Append(c).Append(literal[++i]);
+                        else if (char.IsControl(c) || char.IsSurrogate(c)) sb.Append(@"\x{").Append(((int)c).ToString("X")).Append('}');
+                        else sb.Append(c);
+                        break;
                 }
             }
-            // if it's not unicode, do it again but map the upper ranges to be ASCII instead of UTF-32
-            if (!hasUnicode)
-            {
-                working.Clear();
-                for (var i = 0; i < stateIndices.Length; ++i)
-                {
-                    var cfa = closure[i];
-                    stateIndices[i] = working.Count;
-                    working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
-                    var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
-                    working.Add(itrgp.Count);
-                    foreach (var itr in itrgp)
-                    {
-
-                        working.Add(closure.IndexOf(itr.Key));
-                        working.Add(itr.Value.Count);
-                        var rngs = new List<FARange>();
-                        if (!hasUnicode)
-                        {
-                            foreach (var r in itr.Value)
-                            {
-                                if (r.Min < 128 && r.Max == 1114111)
-                                {
-                                    rngs.Add(new FARange(r.Min, 127));
-                                }
-                                else
-                                {
-                                    rngs.Add(r);
-                                }
-                            }
-                        }
-                        var rng = FARange.ToPacked(rngs);
-                        // add the packed ranges
-                        working.AddRange(rng);
-                    }
-                }
-            }
-            var result = working.ToArray();
-            var state = 0;
-            // now fill in the state indices
-            while (state < result.Length)
-            {
-                ++state;
-                var tlen = result[state++];
-                for (var i = 0; i < tlen; ++i)
-                {
-                    // patch the destination
-                    result[state] = stateIndices[result[state]];
-                    ++state;
-                    var prlen = result[state++];
-                    state += prlen * 2;
-                }
-            }
-            return result;
-        }
-        static int[] ToNonRangeArray(FA fa)
-        {
-            var working = new List<int>();
-            var closure = new List<FA>();
-            fa.FillClosure(closure);
-            var stateIndices = new int[closure.Count];
-            var hasUnicode = false;
-            // fill in the state information
-            for (var i = 0; i < stateIndices.Length; ++i)
-            {
-                var cfa = closure[i];
-                stateIndices[i] = working.Count;
-                // add the accept
-                working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
-                var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
-                // add the number of transitions
-                working.Add(itrgp.Count);
-                foreach (var itr in itrgp)
-                {
-                    // We have to fill in the following after the fact
-                    // We don't have enough info here
-                    // for now just drop the state index as a placeholder
-                    working.Add(closure.IndexOf(itr.Key));
-                    // add the number of single inputs computed from the packed ranges
-                    var inputs = new HashSet<int>(itr.Value.Count);
-                    foreach (var val in itr.Value)
-                    {
-                        if (val.Min > 127 || val.Max > 127 && !(val.Min == 0 && val.Max == 1114111))
-                        {
-                            hasUnicode = true;
-                        }
-                        for (var j = val.Min; j <= val.Max; ++j)
-                        {
-
-                            inputs.Add(j);
-                        }
-                    }
-                    working.Add(inputs.Count);
-                    working.AddRange(inputs);
-                }
-            }
-            if (!hasUnicode)
-            {
-                working.Clear();
-                for (var i = 0; i < stateIndices.Length; ++i)
-                {
-                    var cfa = closure[i];
-                    stateIndices[i] = working.Count;
-                    // add the accept
-                    working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
-                    var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
-                    // add the number of transitions
-                    working.Add(itrgp.Count);
-                    foreach (var itr in itrgp)
-                    {
-                        // We have to fill in the following after the fact
-                        // We don't have enough info here
-                        // for now just drop the state index as a placeholder
-                        working.Add(closure.IndexOf(itr.Key));
-                        // add the number of single inputs computed from the packed ranges
-                        var inputs = new HashSet<int>(itr.Value.Count);
-                        foreach (var val in itr.Value)
-                        {
-                            if (val.Min == 0 && val.Max == 1114111)
-                            {
-                                for (var j = 0; j < 128; ++j)
-                                {
-                                    inputs.Add(j);
-                                }
-                            }
-                            else
-                            {
-                                for (var j = val.Min; j <= val.Max; ++j)
-                                {
-                                    if (j > 127) throw new Exception("Invalid internal code");
-                                    inputs.Add(j);
-                                }
-                            }
-                        }
-                        working.Add(inputs.Count);
-                        working.AddRange(inputs);
-                    }
-                }
-            }
-            var result = working.ToArray();
-            var state = 0;
-            // now fill in the state indices
-            while (state < result.Length)
-            {
-                ++state;
-                var tlen = result[state++];
-                for (var i = 0; i < tlen; ++i)
-                {
-                    // patch the destination
-                    result[state] = stateIndices[result[state]];
-                    ++state;
-                    var prlen = result[state++];
-                    state += prlen;
-                }
-            }
-            return result;
+            return sb.ToString();
         }
         static void EmitFsm(List<HandlerEntry> handlers, List<MapEntry> maps, TextWriter output)
         {
-            FA[] hfas = new FA[handlers.Count + maps.Count];
+            var hfas = new string[handlers.Count + maps.Count];
             for (var i = 0; i < handlers.Count; ++i)
             {
                 var h = handlers[i];
-                hfas[i] = FA.Literal(h.EncodedPath, i);
+                hfas[i] = FsmEscape(h.EncodedPath);
             }
             for (var i = 0; i < maps.Count; ++i)
             {
-                hfas[i + handlers.Count] = maps[i].IsLiteral ? FA.Literal(maps[i].Expr, i + handlers.Count) : FA.Parse(maps[i].Expr, i + handlers.Count);
+                hfas[i + handlers.Count] = maps[i].IsLiteral ? FsmEscape(maps[i].Expr) : maps[i].Expr;
             }
-            var lexer = FA.ToLexer(hfas, true);
-            //lexer.RenderToFile(@"..\..\..\debug.jpg");
-            int[] fsmData = ToRangeArray(lexer);
-            var rsrc = "clasptree.runner_ranges.c";
-            var nrfsmData = ToNonRangeArray(lexer);
-            if (nrfsmData.Length <= fsmData.Length)
-            {
-                rsrc = "clasptree.runner.c";
-                fsmData = nrfsmData;
-                nrfsmData = null;
-            }
+            var lexer = Luthor.Builder.Build(hfas, false);
+            int[] fsmData = Luthor.Compiler.Compile(lexer);
+            const string rsrc = "clasptree.runner.c";
             var width = FsmWidthBytes(fsmData);
             output.Write($"static const {FsmWidthToSignedType(width)} fsm_data[] = {{");
 
@@ -414,6 +246,7 @@ namespace clasptree
             TextReader tr = new StreamReader(stm);
             var s = tr.ReadToEnd();
             s = s.Replace("TYPE", width == 4 ? "INT32" : width == 1 ? "INT8" : "INT16");
+            s=s.Replace("RULES_COUNT",hfas.Length.ToString());
             s = FsmReplaceTypes(s);
             output.Write(s);
         }
